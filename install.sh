@@ -16,6 +16,8 @@
 #   cd meu-projeto && ~/airup/install.sh --cursor --scaffold
 #   cd meu-projeto && ~/airup/install.sh --claude
 #   ~/airup/install.sh --nitro
+#
+# Repositório: https://github.com/Tohwso/airup
 # ============================================================================
 
 set -euo pipefail

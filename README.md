@@ -19,7 +19,7 @@ e gestão de mudanças — tudo em português brasileiro.
 ### Cursor
 
 ```bash
-git clone https://github.com/ricardocosta/airup.git
+git clone https://github.com/Tohwso/airup.git
 cd meu-projeto
 ~/airup/install.sh --cursor --scaffold
 ```
