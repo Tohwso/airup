@@ -1,0 +1,76 @@
+{
+  "name": "airup",
+  "displayName": "RUP AI Kit (AIRUP)",
+  "version": "2.1.0",
+  "description": "Pipeline de engenharia de software com 6 agentes de IA baseado no RUP + SDD. Funciona com qualquer LLM/client.",
+  "author": "Ricardo Costa",
+  "license": "MIT",
+  "repository": "https://github.com/ricardocosta/airup",
+  "agents": [
+    {
+      "id": "airup-governante",
+      "file": "agents/governante.md",
+      "name": "[RUP] Governante",
+      "emoji": "👑",
+      "role": "AI Governor — Pipeline Orchestrator",
+      "description": "Entry point do pipeline. Roteia demandas, orquestra agentes, faz circuit breaking e mantém o diário de bordo (progression.md). NÃO faz o trabalho — governa quem faz.",
+      "order": 0
+    },
+    {
+      "id": "airup-analista-negocios",
+      "file": "agents/analista-negocios.md",
+      "name": "[RUP] Analista de Negócios",
+      "emoji": "📋",
+      "role": "Business Analyst",
+      "description": "Entende o problema de negócio, identifica stakeholders, define regras de negócio (BR-NNN) e processos. Produz spec/docs/01-business/.",
+      "order": 1
+    },
+    {
+      "id": "airup-analista-requisitos",
+      "file": "agents/analista-requisitos.md",
+      "name": "[RUP] Analista de Requisitos",
+      "emoji": "📋",
+      "role": "Requirements Analyst",
+      "description": "Transforma visão de negócio em requisitos rastreáveis (RF-XX, NFR-XX) e casos de uso. Produz spec/docs/02-requirements/.",
+      "order": 2
+    },
+    {
+      "id": "airup-arquiteto",
+      "file": "agents/arquiteto.md",
+      "name": "[RUP] Arquiteto",
+      "emoji": "🏛️",
+      "role": "Software Architect",
+      "description": "Projeta arquitetura (C4, ADRs), modelo de domínio, API spec e diagramas de sequência. Produz spec/docs/03-design/ + 06-deployment/.",
+      "order": 3
+    },
+    {
+      "id": "airup-desenvolvedor",
+      "file": "agents/desenvolvedor.md",
+      "name": "[RUP] Desenvolvedor",
+      "emoji": "🔀",
+      "role": "Software Developer",
+      "description": "Implementa código e documenta padrões de implementação. Produz src/ + tests/ + spec/docs/04-implementation/.",
+      "order": 4
+    },
+    {
+      "id": "airup-analista-qualidade",
+      "file": "agents/analista-qualidade.md",
+      "name": "[RUP] Analista de Qualidade",
+      "emoji": "🧪",
+      "role": "Quality Assurance Analyst",
+      "description": "Verifica conformidade com spec, cataloga dívida técnica e riscos. Emite veredicto GO/CONDITIONAL_GO/NO_GO. Produz spec/docs/05-test/ + 07-change-management/.",
+      "order": 5
+    }
+  ],
+  "pipeline": {
+    "greenfield": "👑 → 📋 Negócios → 📋 Requisitos → 🏛️ Arquitetura → 🔀 Desenvolvimento → 🧪 Qualidade",
+    "brownfield": "👑 → 🔀 Dev (reverse eng.) → 🏛️ Arq → 📋 Requisitos → 📋 Negócios → 🧪 Qualidade"
+  },
+  "adapters": {
+    "nitro": "install.sh --nitro",
+    "cursor": "install.sh --cursor",
+    "claude": "install.sh --claude",
+    "copilot": "install.sh --copilot",
+    "windsurf": "install.sh --windsurf"
+  }
+}
