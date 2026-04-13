@@ -1,6 +1,6 @@
 # 👑 AIRUP — RUP AI Kit
 
-[![Version](https://img.shields.io/badge/version-2.1.0-blue)]()
+[![Version](https://img.shields.io/badge/version-2.3.0-blue)]()
 [![License](https://img.shields.io/badge/license-MIT-green)]()
 [![Agents](https://img.shields.io/badge/agents-6-purple)]()
 
@@ -13,6 +13,32 @@ e gestão de mudanças — tudo em português brasileiro.
 ```
 📋 Negócios → 📋 Requisitos → 🏛️ Arquitetura → 🔀 Desenvolvimento → 🧪 Qualidade
 ```
+
+## ✨ Novidades v2.3.0
+
+### HITL Supervision — Controle o ritmo do pipeline
+
+Escolha no início como quer supervisionar:
+
+| Modo | Comportamento |
+|------|---------------|
+| 🟢 **Autônomo** | Pipeline roda end-to-end (padrão) |
+| 🟡 **Supervisionado** | Pausa após cada agente para seu GO/NO-GO |
+| 🔵 **Gates Estratégicos** | Pausa só após Negócios e Arquitetura |
+
+A cada gate, você pode: ✅ Aprovar · 📝 Pedir ajustes · ⏸️ Pausar · ❌ Abortar
+
+### Experience Pack — 5 melhorias de UX
+
+| Feature | Descrição |
+|---------|-----------|
+| 📊 **Progress Bar** | Barra visual ASCII mostrando onde o pipeline está |
+| ⏱️ **Duração por fase** | Cronometra cada agente, mostra no gate e no summary |
+| 🏁 **Pipeline Summary** | Resumo executivo ao final — screenshot-worthy |
+| 🎬 **"Previously on..."** | Recap narrativo ao retomar pipeline pausado |
+| 💡 **Fun Facts** | Dado curioso sobre produtividade em cada gate |
+
+---
 
 ## ⚡ Quick Start
 
@@ -58,12 +84,12 @@ Ou no chat do Wolf: *"Instala os agentes do AIRUP do Wolf Pack"*
 
 | # | Agente | Emoji | O que faz | Produz |
 |---|--------|-------|-----------|--------|
-| 0 | **Governante** | 👑 | Orquestra o pipeline, roteia demandas, circuit breaking | `spec/docs/00-overview/` |
+| 0 | **Governante** | 👑 | Orquestra o pipeline, roteia demandas, circuit breaking, HITL gates | `spec/docs/00-overview/` |
 | 1 | **Analista de Negócios** | 📋 | Entende o problema, define regras de negócio | `spec/docs/01-business/` |
 | 2 | **Analista de Requisitos** | 📋 | Requisitos funcionais/não-funcionais, casos de uso | `spec/docs/02-requirements/` |
 | 3 | **Arquiteto** | 🏛️ | Arquitetura C4, modelo de domínio, API spec | `spec/docs/03-design/` |
 | 4 | **Desenvolvedor** | 🔀 | Implementação, padrões de código | `spec/docs/04-implementation/` |
-| 5 | **Analista de Qualidade** | 🧪 | Verificação, dívida técnica, riscos | `spec/docs/05-test/` |
+| 5 | **Analista de Qualidade** | 🧪 | Verificação, dívida técnica, riscos, veredicto GO/NO-GO | `spec/docs/05-test/` |
 
 ## 📁 Estrutura do Pack
 
@@ -74,15 +100,15 @@ airup/
 ├── install.sh                         ← Instalador universal
 │
 ├── agents/                            ← 6 prompts individuais (multi-agent)
-│   ├── governante.md                  ← 👑 25K chars
-│   ├── analista-negocios.md           ← 📋
-│   ├── analista-requisitos.md         ← 📋
-│   ├── arquiteto.md                   ← 🏛️
-│   ├── desenvolvedor.md               ← 🔀
-│   └── analista-qualidade.md          ← 🧪
+│   ├── governante.md                  ← 👑 ~35K chars (v2.3.0)
+│   ├── analista-negocios.md           ← 📋 (v2.1.0)
+│   ├── analista-requisitos.md         ← 📋 (v2.1.0)
+│   ├── arquiteto.md                   ← 🏛️ (v2.1.0)
+│   ├── desenvolvedor.md               ← 🔀 (v2.1.0)
+│   └── analista-qualidade.md          ← 🧪 (v2.1.0)
 │
 ├── combined/                          ← Mega-prompt unificado (single-agent)
-│   ├── AIRUP.md                       ← Prompt combinado (61K chars)
+│   ├── AIRUP.md                       ← Prompt combinado (~83K chars)
 │   ├── cursorrules                    ← → .cursorrules
 │   ├── CLAUDE.md                      ← → CLAUDE.md
 │   ├── copilot-instructions.md        ← → .github/copilot-instructions.md
@@ -125,6 +151,42 @@ Projeto com spec existente. Evolui incrementalmente.
 | Deployment | CI/CD, infraestrutura |
 | Gestão de Mudanças | dívida técnica, riscos, roadmap |
 
+## 🎛️ Supervisão HITL (v2.3.0)
+
+Ao iniciar o pipeline, o Governante pergunta como supervisionar:
+
+```
+Como você quer supervisionar este pipeline?
+
+1. Autônomo — Rodo tudo, perguntas só quando necessário
+2. Supervisionado — Pauso após cada agente para review
+3. Gates estratégicos — Pauso apenas após Negócios e Arquitetura
+```
+
+Em cada gate, você vê:
+- 📊 Progress bar visual do pipeline
+- ⏱️ Duração da fase que acabou
+- 📦 Artefatos produzidos
+- 🎯 Decisões-chave
+- 💡 Fun fact sobre o que foi produzido
+
+E pode: ✅ Aprovar · 📝 Pedir ajustes · ⏸️ Pausar · ❌ Abortar
+
+### Pipeline Summary
+
+Ao final, recebe um resumo executivo completo:
+
+```
+═══════════════════════════════════════════════
+  🏁 PIPELINE COMPLETO — meu-projeto
+═══════════════════════════════════════════════
+  ⏱️  Tempo total:        23m 55s
+  📦  Artefatos gerados:  22 arquivos
+  🏁  Veredicto QA:       GO ✅
+  📈  83 RF · 30 NFR · 9 ADRs · 22 TD
+═══════════════════════════════════════════════
+```
+
 ## 🏗️ Multi-Agent vs Single-Agent
 
 | | Multi-Agent | Single-Agent |
@@ -153,6 +215,21 @@ criado para resolver o problema de coordenação em pipelines multi-agente.
 - Post #003: The AI Governor Pattern
 - Post #007: The RUP AI Kit
 - Post #008: The Economics of AI-Driven Development
+
+## 📝 Changelog
+
+### v2.3.0 (2026-07-18)
+- **Experience Pack**: Progress Bar, Duration Tracking, Pipeline Summary, "Previously on...", Fun Facts
+- **HITL Supervision v2**: 3 modos (Autônomo, Supervisionado, Gates Estratégicos)
+- Phase Completion Signal estruturado em todos os 5 especialistas
+
+### v2.1.0 (2026-04-17)
+- Progression Protocol com handoff entries e debrief
+- Construction Phase Protocol com role separation enforcement
+- Bootstrap Protocol completo (3 modos)
+
+### v2.0.0 (2026-04-12)
+- Publicação inicial no Wolf Pack — 6 agentes
 
 ## 📝 Licença
 

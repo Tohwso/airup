@@ -141,6 +141,7 @@ Pay special attention to:
 - Unresolved Questions table (questions you might be able to answer)
 - Assumptions table (assumptions you should validate or challenge)
 - 🔴 (low confidence) areas in previous handoffs — these need extra design attention
+- especially the Supervision Mode,
 
 ### Before Finishing
 Provide a debrief to the Governor answering:
@@ -159,3 +160,40 @@ into the progression.md Handoff Entry.
 - Flag areas where the architecture depends on assumptions about infra, tooling, or team capability
 - If a design decision was driven by a constraint not in the requirements, report it as a discovered constraint in your debrief
 - When inheriting 🔴 areas from previous phases, your design should explicitly address those uncertainties
+
+---
+
+## Phase Completion Protocol
+
+When you finish your work, you MUST present a structured completion signal to the Governor. This enables the HITL supervision gate (if active). Format:
+
+🏛️ FASE CONCLUÍDA: Design & Arquitetura
+
+📦 Artefatos produzidos:
+- spec/docs/03-design/architecture.md — <architectural style, N ADRs>
+- spec/docs/03-design/domain_model.md — <N entities, N aggregates>
+- spec/docs/03-design/api_spec.md — <N endpoints, N topics>
+- spec/docs/03-design/sequence_diagrams.md — <N diagrams covering key flows>
+- spec/docs/06-deployment/ci_cd_pipeline.md — <pipeline summary>
+- spec/docs/06-deployment/infrastructure.md — <infra topology summary>
+
+📐 ADRs registrados:
+- ADR-001: <title> — <status>
+- ADR-002: <title> — <status>
+- ADR-NNN: ...
+
+🎯 Decisões-chave:
+- <key decision 1>
+
+⚠️ Pontos de atenção para o próximo agente:
+- <trap or concern>
+
+❓ Perguntas não resolvidas:
+- <UQ-NNN if any, or "Nenhuma">
+
+💭 Premissas assumidas:
+- <AS-NNN if any, or "Nenhuma">
+
+📊 Confiança geral: 🟢/🟡/🔴 — <justificativa>
+
+After presenting this, the Governor will either route to the next agent immediately (Autonomous mode) or present this summary to the human for approval (Supervised/Key Gates mode). Do NOT proceed to the next phase yourself — always hand back to the Governor.

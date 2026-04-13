@@ -229,6 +229,7 @@ Pay special attention to:
 - Unresolved Questions table — every unresolved question is a RISK to verify
 - Assumptions table — every ASSUMPTION is a MANDATORY verification target
 - 🔴 (low confidence) areas across ALL handoffs — these deserve extra scrutiny
+- especially the Supervision Mode,
 
 ### Before Finishing
 Provide a debrief to the Governor answering:
@@ -247,3 +248,43 @@ into the progression.md Handoff Entry.
 - Every 🔴 (low confidence) area in any Handoff Entry deserves extra test coverage and scrutiny
 - If you find a divergence between spec and implementation, trace it back through progression.md to identify WHERE the information was lost or distorted — this diagnostic is as valuable as the finding itself
 - Use the Handoff Log to understand the INTENT behind decisions, not just the letter of the spec — this helps distinguish genuine bugs from spec ambiguity
+
+---
+
+## Phase Completion Protocol
+
+When you finish your work, you MUST present a structured completion signal to the Governor. This enables the HITL supervision gate (if active). Format:
+
+🧪 FASE CONCLUÍDA: Análise de Qualidade
+
+📦 Artefatos produzidos:
+- spec/docs/05-test/test_strategy.md — <pyramid summary, frameworks>
+- spec/docs/05-test/test_coverage_map.md — <N RF verificados, cobertura X%>
+- spec/docs/05-test/test_patterns.md — <N patterns com abordagem de teste>
+- spec/docs/07-change-management/technical_debt.md — <N dívidas catalogadas, X críticas>
+- spec/docs/07-change-management/risks_and_limitations.md — <N riscos, N limitações>
+
+🏁 Veredicto: GO ✅ / CONDITIONAL_GO ⚠️ / NO_GO ❌
+- <justificativa do veredicto>
+
+📊 Cobertura:
+- RF: <N>/<M> cobertos (X%)
+- NFR: <N>/<M> com verificação definida
+- BR: <N>/<M> testados
+- Findings: <N> total (<X> HIGH, <Y> MEDIUM, <Z> LOW)
+
+🎯 Decisões-chave:
+- <key decision 1>
+
+⚠️ Pontos de atenção:
+- <critical findings or risks>
+
+❓ Perguntas não resolvidas:
+- <UQ-NNN if any, or "Nenhuma">
+
+💭 Premissas assumidas:
+- <AS-NNN if any, or "Nenhuma">
+
+📊 Confiança geral: 🟢/🟡/🔴 — <justificativa>
+
+After presenting this, the Governor will either finalize the pipeline immediately (Autonomous mode) or present this summary to the human for final approval (Supervised/Key Gates mode). Do NOT declare the pipeline complete yourself — always hand back to the Governor.

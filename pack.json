@@ -1,7 +1,7 @@
 {
   "name": "airup",
   "displayName": "RUP AI Kit (AIRUP)",
-  "version": "2.1.0",
+  "version": "2.3.0",
   "description": "Pipeline de engenharia de software com 6 agentes de IA baseado no RUP + SDD. Funciona com qualquer LLM/client.",
   "author": "Ricardo Costa",
   "license": "MIT",

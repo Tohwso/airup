@@ -122,6 +122,7 @@ Pay special attention to:
 - The latest Handoff Entry (context from the previous phase)
 - Unresolved Questions table (questions you might be able to answer)
 - Assumptions table (assumptions you should validate or challenge)
+- especially the Supervision Mode,
 
 ### Before Finishing
 Provide a debrief to the Governor answering:
@@ -139,3 +140,34 @@ into the progression.md Handoff Entry.
 - Document domain concepts that have multiple interpretations
 - If a process has variants by persona/segment, flag the complexity level
 - When a business rule source is ambiguous (regulation vs convention vs preference), note the distinction — it affects downstream priority
+
+---
+
+## Phase Completion Protocol
+
+When you finish your work, you MUST present a structured completion signal to the Governor. This enables the HITL supervision gate (if active). Format:
+
+📋 FASE CONCLUÍDA: Análise de Negócios
+
+📦 Artefatos produzidos:
+- spec/docs/01-business/vision.md — <1-line summary>
+- spec/docs/01-business/glossary.md — <N terms defined>
+- spec/docs/01-business/stakeholders.md — <N stakeholders mapped>
+- spec/docs/01-business/business-rules.md — <N rules: X regulatory, Y operational, Z internal>
+- spec/docs/01-business/business-processes.md — <N processes mapped>
+
+🎯 Decisões-chave:
+- <key decision 1>
+
+⚠️ Pontos de atenção para o próximo agente:
+- <trap or concern>
+
+❓ Perguntas não resolvidas:
+- <UQ-NNN if any, or "Nenhuma">
+
+💭 Premissas assumidas:
+- <AS-NNN if any, or "Nenhuma">
+
+📊 Confiança geral: 🟢/🟡/🔴 — <justificativa>
+
+After presenting this, the Governor will either route to the next agent immediately (Autonomous mode) or present this summary to the human for approval (Supervised/Key Gates mode). Do NOT proceed to the next phase yourself — always hand back to the Governor.

@@ -167,6 +167,7 @@ Pay special attention to:
 - Unresolved Questions table (questions you might be able to answer from an implementation perspective)
 - Assumptions table (assumptions that may affect implementation choices)
 - ⚠️ Traps flagged by previous agents — these are likely sources of bugs
+- especially the Supervision Mode,
 
 ### Before Finishing
 Provide a debrief to the Governor answering:
@@ -184,3 +185,39 @@ into the progression.md Handoff Entry.
 - During Construction: report implementation discoveries — edge cases not covered by specs, performance concerns, dependency conflicts
 - If you find that a spec artifact is ambiguous during implementation, do NOT interpret silently — flag it to the Governor via your debrief as an unresolved question
 - When implementing, cross-reference your work against the Assumptions table — if you find evidence that an assumption was wrong, flag it immediately
+
+---
+
+## Phase Completion Protocol
+
+When you finish your work, you MUST present a structured completion signal to the Governor. This enables the HITL supervision gate (if active). Format:
+
+🔀 FASE CONCLUÍDA: Implementação / Documentação Técnica
+
+📦 Artefatos produzidos:
+- spec/docs/04-implementation/coding_standards.md — <language/framework, key conventions>
+- spec/docs/04-implementation/implementation_patterns.md — <N patterns catalogados>
+- spec/docs/04-implementation/configuration_guide.md — <N profiles, N env vars>
+- spec/docs/04-implementation/dependency_map.md — <N dependencies, N external services>
+
+🔧 Código (se Construction):
+- <N> arquivos criados/modificados em src/
+- <N> scaffold tests em tests/dev/
+- Compilação: ✅/❌
+- Scaffold tests: <N> passing, <N> failing
+
+🎯 Decisões-chave:
+- <key decision 1>
+
+⚠️ Pontos de atenção para o próximo agente:
+- <trap or concern>
+
+❓ Perguntas não resolvidas:
+- <UQ-NNN if any, or "Nenhuma">
+
+💭 Premissas assumidas:
+- <AS-NNN if any, or "Nenhuma">
+
+📊 Confiança geral: 🟢/🟡/🔴 — <justificativa>
+
+After presenting this, the Governor will either route to the next agent immediately (Autonomous mode) or present this summary to the human for approval (Supervised/Key Gates mode). Do NOT proceed to the next phase yourself — always hand back to the Governor.

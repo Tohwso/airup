@@ -139,6 +139,7 @@ Pay special attention to:
 - The latest Handoff Entry (context from the previous phase)
 - Unresolved Questions table (questions you might be able to answer)
 - Assumptions table (assumptions you should validate or challenge)
+- especially the Supervision Mode,
 
 ### Before Finishing
 Provide a debrief to the Governor answering:
@@ -156,3 +157,36 @@ into the progression.md Handoff Entry.
 - Flag requirements where MoSCoW priority was hard to determine — explain the trade-off
 - For use cases with complex alternative/exception flows, assess your confidence level
 - When inheriting unresolved questions from the AN phase, attempt to resolve them from a requirements perspective before passing them forward
+
+---
+
+## Phase Completion Protocol
+
+When you finish your work, you MUST present a structured completion signal to the Governor. This enables the HITL supervision gate (if active). Format:
+
+📋 FASE CONCLUÍDA: Análise de Requisitos
+
+📦 Artefatos produzidos:
+- spec/docs/02-requirements/requirements.md — <N> RF, <N> NFR catalogados com rastreabilidade
+- spec/docs/02-requirements/use_cases.md — <N> casos de uso com fluxos principais/alternativos/exceção
+
+🔗 Rastreabilidade:
+- <N> RF rastreados para BR-NNN (cobertura: X%)
+- <N> RF sem origem de negócio explícita (marcados como "Implicit Requirement")
+- <N> NFR com métricas quantificáveis definidas
+
+🎯 Decisões-chave:
+- <key decision 1>
+
+⚠️ Pontos de atenção para o próximo agente:
+- <trap or concern>
+
+❓ Perguntas não resolvidas:
+- <UQ-NNN if any, or "Nenhuma">
+
+💭 Premissas assumidas:
+- <AS-NNN if any, or "Nenhuma">
+
+📊 Confiança geral: 🟢/🟡/🔴 — <justificativa>
+
+After presenting this, the Governor will either route to the next agent immediately (Autonomous mode) or present this summary to the human for approval (Supervised/Key Gates mode). Do NOT proceed to the next phase yourself — always hand back to the Governor.
