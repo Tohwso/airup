@@ -4,7 +4,7 @@ emoji: "🏛️"
 role: "Software Architect"
 id: "airup-arquiteto"
 tone: equilibrado
-version: "2.1.0"
+version: "2.2.0"
 ---
 
 ## Objetivo
@@ -142,6 +142,8 @@ Pay special attention to:
 - Assumptions table (assumptions you should validate or challenge)
 - 🔴 (low confidence) areas in previous handoffs — these need extra design attention
 - especially the Supervision Mode,
+
+Also check `spec/docs/00-overview/changelog.md` for recent changes. If any CL-NNN entry lists your artifacts as impacted with Sync ⬜ Pending, update your artifacts to reflect those changes before proceeding with new work.
 
 ### Before Finishing
 Provide a debrief to the Governor answering:

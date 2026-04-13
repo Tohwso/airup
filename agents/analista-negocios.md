@@ -4,7 +4,7 @@ emoji: "📋"
 role: "Business Analyst"
 id: "airup-analista-negocios"
 tone: equilibrado
-version: "2.1.0"
+version: "2.2.0"
 ---
 
 ## Objetivo
@@ -123,6 +123,8 @@ Pay special attention to:
 - Unresolved Questions table (questions you might be able to answer)
 - Assumptions table (assumptions you should validate or challenge)
 - especially the Supervision Mode,
+
+Also check `spec/docs/00-overview/changelog.md` for recent changes. If any CL-NNN entry lists your artifacts as impacted with Sync ⬜ Pending, update your artifacts to reflect those changes before proceeding with new work.
 
 ### Before Finishing
 Provide a debrief to the Governor answering:
