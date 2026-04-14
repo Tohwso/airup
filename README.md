@@ -42,41 +42,37 @@ A cada gate, você pode: ✅ Aprovar · 📝 Pedir ajustes · ⏸️ Pausar · �
 
 ## ⚡ Quick Start
 
-### Cursor
+### Via `npx` (recomendado — zero instalação)
 
 ```bash
-git clone https://github.com/Tohwso/airup.git
-cd meu-projeto
-~/airup/install.sh --cursor --scaffold
+# Cursor
+cd meu-projeto && npx github:Tohwso/airup --cursor --scaffold
+
+# Claude Code
+cd meu-projeto && npx github:Tohwso/airup --claude --scaffold
+
+# GitHub Copilot
+cd meu-projeto && npx github:Tohwso/airup --copilot --scaffold
+
+# Windsurf
+cd meu-projeto && npx github:Tohwso/airup --windsurf --scaffold
+
+# HubAI Nitro (instala os 6 agentes)
+npx github:Tohwso/airup --nitro
 ```
 
-Abra o Cursor e diga: **"Aplique SDD no repositório atual"**
+Abra sua ferramenta e diga: **"Aplique SDD no repositório atual"**
 
-### Claude Code
+### Via clone (alternativa)
 
 ```bash
-~/airup/install.sh --claude --scaffold
+git clone https://github.com/Tohwso/airup.git ~/airup
+cd meu-projeto && ~/airup/install.sh --cursor --scaffold
 ```
 
-### GitHub Copilot
+### Via Wolf Pack (Nitro only)
 
-```bash
-~/airup/install.sh --copilot --scaffold
-```
-
-### Windsurf
-
-```bash
-~/airup/install.sh --windsurf --scaffold
-```
-
-### HubAI Nitro
-
-```bash
-~/airup/install.sh --nitro
-```
-
-Ou no chat do Wolf: *"Instala os agentes do AIRUP do Wolf Pack"*
+No chat do Nitro: *"Instala os agentes do AIRUP do Wolf Pack"*
 
 ---
 
@@ -96,8 +92,12 @@ Ou no chat do Wolf: *"Instala os agentes do AIRUP do Wolf Pack"*
 ```
 airup/
 ├── README.md                          ← Você está aqui
-├── pack.json                          ← Metadata do pack
-├── install.sh                         ← Instalador universal
+├── package.json                       ← npm/npx metadata + bin entry
+├── pack.json                          ← Metadata do pack (legacy)
+├── install.sh                         ← Instalador shell (legacy)
+│
+├── bin/                               ← CLI Node.js
+│   └── airup.mjs                      ← Entry point (zero deps, ESM)
 │
 ├── agents/                            ← 6 prompts individuais (multi-agent)
 │   ├── governante.md                  ← 👑 ~35K chars (v2.3.0)
@@ -195,7 +195,7 @@ Ao final, recebe um resumo executivo completo:
 | **Formato** | `agents/*.md` (6 arquivos) | `combined/AIRUP.md` (1 arquivo) |
 | **Como funciona** | Pipeline real com delegação | LLM simula os 6 papéis sequencialmente |
 | **Qualidade** | ✅ Separação real de contexto | ⚠️ Tudo na mesma conversa |
-| **Install** | `./install.sh --nitro` | `./install.sh --cursor` |
+| **Install** | `npx github:Tohwso/airup --nitro` | `npx github:Tohwso/airup --cursor` |
 
 ## 🎓 Origem
 
@@ -217,6 +217,11 @@ criado para resolver o problema de coordenação em pipelines multi-agente.
 - Post #008: The Economics of AI-Driven Development
 
 ## 📝 Changelog
+
+### v2.4.0 (2026-07-21)
+- **npx installer** — `npx github:Tohwso/airup --nitro` funciona sem instalar nada
+- CLI Node.js (bin/airup.mjs) — zero dependências, ESM, paridade total com install.sh
+- package.json com bin entry para npx/npm
 
 ### v2.3.0 (2026-07-18)
 - **Experience Pack**: Progress Bar, Duration Tracking, Pipeline Summary, "Previously on...", Fun Facts

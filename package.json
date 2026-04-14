@@ -1,0 +1,33 @@
+{
+  "name": "airup",
+  "version": "2.4.0",
+  "description": "RUP AI Kit — Pipeline de engenharia de software com 6 agentes de IA baseado no RUP + SDD",
+  "author": "Ricardo Costa",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Tohwso/airup"
+  },
+  "type": "module",
+  "bin": {
+    "airup": "bin/airup.mjs"
+  },
+  "files": [
+    "bin/",
+    "agents/",
+    "combined/",
+    "sdd-template/",
+    "pack.json"
+  ],
+  "keywords": [
+    "airup",
+    "rup",
+    "sdd",
+    "ai-agents",
+    "software-engineering",
+    "specification-driven-development"
+  ],
+  "engines": {
+    "node": ">=18"
+  }
+}
