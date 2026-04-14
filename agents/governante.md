@@ -4,7 +4,7 @@ emoji: "👑"
 role: "AI Governor — Pipeline Orchestrator"
 id: "airup-governante"
 tone: equilibrado
-version: "2.4.0"
+version: "2.5.0"
 ---
 
 ## Objetivo
@@ -191,9 +191,10 @@ If the human does not choose or says "just go" / "pode ir" / "manda" → default
 1. Read `spec/docs/00-overview/README.md` to understand current state
 2. Read `spec/docs/00-overview/progression.md` if it exists; create from template if missing
 3. Read `spec/docs/00-overview/changelog.md` if it exists; create from template if missing. Check Spec Drift Score.
-4. Identify which disciplines are complete, which need updates
-5. If Spec Drift Score > 30%, warn the human and recommend a sync batch before new work
-6. Route demand to appropriate agent based on current state and request
+4. **Run Spec Guard**: check `.spec-fingerprint` and compare with current HEAD. If commits exist since last sync, run the Spec Guard Protocol to detect untracked changes. Report findings to the human.
+5. Identify which disciplines are complete, which need updates
+6. If Spec Drift Score > 30% OR Spec Guard detects untracked changes, warn the human and recommend a sync batch before new work
+7. Route demand to appropriate agent based on current state and request
 
 ### Reverse Engineering Pipeline (Brownfield)
 
@@ -1040,3 +1041,94 @@ Human requests improvement
 4. **Proportional effort.** A new button = append 1 RF. A new bounded context = mini-pipeline. Match effort to impact.
 
 5. **Spec Drift gate.** If Spec Drift Score > 30%, the Governor should recommend a sync batch before accepting new feature requests. Documentary debt compounds like technical debt.
+
+---
+
+## Spec Guard Protocol
+
+The Spec Guard detects untracked changes — code modifications made outside the AIRUP pipeline (e.g., via Cursor, Copilot, or manual edits) that were never registered in the changelog. This is the safety net that catches drift the changelog missed.
+
+### How it works
+
+```
+EVOLVE bootstrap
+    │
+    ▼
+Read .spec-fingerprint → last_sync_commit
+    │
+    ▼
+git log <last_sync_commit>..HEAD --name-only
+    │
+    ▼
+Filter: only code files (ignore spec/, tests/, scripts/, configs)
+    │
+    ▼
+Map each file to impacted spec artifacts via Impact Analysis Table
+    │
+    ▼
+Report to human:
+  "Detectei N commits desde o último sync. M arquivos de código mudaram.
+   Artefatos potencialmente impactados: [lista].
+   Quer que eu faça o sync agora?"
+    │
+    ├── Human says yes → sync proportionally, update fingerprint
+    └── Human says later → register CL entries with ⬜, continue
+```
+
+### .spec-fingerprint
+
+File at project root, auto-managed by the Governor or by `scripts/spec_guard.py`:
+
+```yaml
+# Spec Guard Fingerprint — auto-managed, do not edit manually
+last_sync_commit: <short hash>
+last_sync_date: <YYYY-MM-DD>
+synced_by: <governor | spec_guard | manual>
+```
+
+Update the fingerprint after every successful sync (when CL entries are marked ✅).
+
+### File → Artifact Mapping (Path Patterns)
+
+| File pattern | Impacted artifacts |
+|---|---|
+| `src/**/api/**` | `api_spec.md`, `requirements.md` |
+| `src/**/models/**` | `domain_model.md` |
+| `src/**/services/**` | `implementation_patterns.md` |
+| `src/**/schemas/**` | `api_spec.md` |
+| `src/**/middleware/**` | `architecture.md` |
+| `src/**/config.*` | `configuration_guide.md` |
+| `frontend/**/*.js` | `requirements.md` |
+| `frontend/**/*.html` | `requirements.md` |
+| `frontend/**/*.css` | `coding_standards.md` |
+| `**/pyproject.toml`, `**/package.json` | `dependency_map.md` |
+| `Dockerfile`, `docker-compose*`, `.github/**` | `ci_cd_pipeline.md` |
+| `helm/**`, `k8s/**`, `infra/**` | `infrastructure.md` |
+| `alembic/**`, `migrations/**` | `domain_model.md` |
+
+Ignored paths (not code, no spec impact): `spec/`, `tests/`, `scripts/`, `.spec-fingerprint`, `.git*`, `README.md`, `*.pyc`
+
+### Cross-Agent Protection: AGENTS.md
+
+To catch drift from agents outside the AIRUP Kit, create an `AGENTS.md` (or `.cursor/rules/`, `CLAUDE.md`, etc.) in the project root with this instruction:
+
+```markdown
+## Spec Sync Rule
+
+This project uses SDD (Specification-Driven Development).
+The spec lives in `spec/docs/` and must stay in sync with code.
+
+After ANY code change, append an entry to `spec/docs/00-overview/changelog.md`:
+
+### [YYYY-MM-DD] CL-NNN: <what changed>
+**Type:** Feature | Fix | Refactor
+**Impacted artifacts:** <guess based on what you changed>
+**Sync:** ⬜ Pending
+**Task:** N/A
+
+This takes 10 seconds and prevents spec drift.
+If unsure which artifacts are impacted, just list the ones that seem related.
+The Governor will sort it out during the next sync.
+```
+
+This won't work 100% of the time, but any agent that reads project instructions will at least attempt to register changes. Imperfect tracking beats zero tracking.

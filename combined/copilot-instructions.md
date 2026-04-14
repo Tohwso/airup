@@ -229,11 +229,10 @@ If the human does not choose or says "just go" / "pode ir" / "manda" → default
 1. Read `spec/docs/00-overview/README.md` to understand current state
 2. Read `spec/docs/00-overview/progression.md` if it exists; create from template if missing
 3. Read `spec/docs/00-overview/changelog.md` if it exists; create from template if missing. Check Spec Drift Score.
-4. Identify which disciplines are complete, which need updates
-5. If Spec Drift Score > 30%, warn the human and recommend a sync batch before new work
-6. Route demand to appropriate agent based on current state and request
-3. Identify which disciplines are complete, which need updates
-4. Route demand to appropriate agent based on current state and request
+4. **Run Spec Guard**: check `.spec-fingerprint` and compare with current HEAD. If commits exist since last sync, run the Spec Guard Protocol to detect untracked changes. Report findings to the human.
+5. Identify which disciplines are complete, which need updates
+6. If Spec Drift Score > 30% OR Spec Guard detects untracked changes, warn the human and recommend a sync batch before new work
+7. Route demand to appropriate agent based on current state and request
 
 ### Reverse Engineering Pipeline (Brownfield)
 
@@ -1121,7 +1120,8 @@ Pay special attention to:
 - especially the Supervision Mode,
 
 Also check `spec/docs/00-overview/changelog.md` for recent changes. If any CL-NNN entry lists your artifacts as impacted with Sync ⬜ Pending, update your artifacts to reflect those changes before proceeding with new work.
-### Before Finishing
+
+If you are operating OUTSIDE the full AIRUP pipeline (e.g., invoked directly for a quick fix or improvement), you MUST append a changelog entry to `spec/docs/00-overview/changelog.md` after completing your work. Use the format: `### [YYYY-MM-DD] CL-NNN: <title>` with `Sync: ⬜ Pending`. This ensures the Spec Guard can track all changes.### Before Finishing
 Provide a debrief to the Governor answering:
 1. What was the hardest decision you made in this phase?
 2. What alternatives did you consider and discard? Why?
@@ -1310,7 +1310,8 @@ Pay special attention to:
 - especially the Supervision Mode,
 
 Also check `spec/docs/00-overview/changelog.md` for recent changes. If any CL-NNN entry lists your artifacts as impacted with Sync ⬜ Pending, update your artifacts to reflect those changes before proceeding with new work.
-### Before Finishing
+
+If you are operating OUTSIDE the full AIRUP pipeline (e.g., invoked directly for a quick fix or improvement), you MUST append a changelog entry to `spec/docs/00-overview/changelog.md` after completing your work. Use the format: `### [YYYY-MM-DD] CL-NNN: <title>` with `Sync: ⬜ Pending`. This ensures the Spec Guard can track all changes.### Before Finishing
 Provide a debrief to the Governor answering:
 1. What was the hardest decision you made in this phase?
 2. What alternatives did you consider and discard? Why?
@@ -1503,7 +1504,8 @@ Pay special attention to:
 - especially the Supervision Mode,
 
 Also check `spec/docs/00-overview/changelog.md` for recent changes. If any CL-NNN entry lists your artifacts as impacted with Sync ⬜ Pending, update your artifacts to reflect those changes before proceeding with new work.
-### Before Finishing
+
+If you are operating OUTSIDE the full AIRUP pipeline (e.g., invoked directly for a quick fix or improvement), you MUST append a changelog entry to `spec/docs/00-overview/changelog.md` after completing your work. Use the format: `### [YYYY-MM-DD] CL-NNN: <title>` with `Sync: ⬜ Pending`. This ensures the Spec Guard can track all changes.### Before Finishing
 Provide a debrief to the Governor answering:
 1. What was the hardest decision you made in this phase?
 2. What alternatives did you consider and discard? Why?
@@ -1727,7 +1729,8 @@ Pay special attention to:
 - especially the Supervision Mode,
 
 Also check `spec/docs/00-overview/changelog.md` for recent changes. If any CL-NNN entry lists your artifacts as impacted with Sync ⬜ Pending, update your artifacts to reflect those changes before proceeding with new work.
-### Before Finishing
+
+If you are operating OUTSIDE the full AIRUP pipeline (e.g., invoked directly for a quick fix or improvement), you MUST append a changelog entry to `spec/docs/00-overview/changelog.md` after completing your work. Use the format: `### [YYYY-MM-DD] CL-NNN: <title>` with `Sync: ⬜ Pending`. This ensures the Spec Guard can track all changes.### Before Finishing
 Provide a debrief to the Governor answering:
 1. What was the hardest decision you made in this phase?
 2. What alternatives did you consider and discard? Why?
@@ -2014,6 +2017,8 @@ Also read `spec/docs/00-overview/changelog.md` in full. This is critical for qua
 - Every CL-NNN entry with Sync ⬜ Pending represents a divergence between code and spec. Flag these as findings — the spec cannot be trusted for those areas.
 - Calculate the Spec Drift Score: `(pending entries / total entries) × 100`. Include this in your verification report.
 - If Spec Drift > 30%, note this as a RISK — your verification may produce false positives because the spec does not reflect reality.
+
+If you are operating OUTSIDE the full AIRUP pipeline (e.g., invoked directly for a quick fix or improvement), you MUST append a changelog entry to `spec/docs/00-overview/changelog.md` after completing your work. Use the format: `### [YYYY-MM-DD] CL-NNN: <title>` with `Sync: ⬜ Pending`. This ensures the Spec Guard can track all changes.
 ### Before Finishing
 Provide a debrief to the Governor answering:
 1. What was the hardest decision you made in this phase?

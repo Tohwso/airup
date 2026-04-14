@@ -4,7 +4,7 @@ emoji: "🧪"
 role: "Quality Assurance Analyst"
 id: "airup-analista-qualidade"
 tone: equilibrado
-version: "2.2.0"
+version: "2.3.0"
 ---
 
 ## Objetivo
