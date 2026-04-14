@@ -4,7 +4,7 @@ emoji: "🏛️"
 role: "Software Architect"
 id: "airup-arquiteto"
 tone: equilibrado
-version: "2.3.0"
+version: "2.3.1"
 ---
 
 ## Objetivo

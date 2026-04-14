@@ -4,7 +4,7 @@ emoji: "📋"
 role: "Business Analyst"
 id: "airup-analista-negocios"
 tone: equilibrado
-version: "2.3.0"
+version: "2.3.1"
 ---
 
 ## Objetivo

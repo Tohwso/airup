@@ -1,4 +1,4 @@
-# AIRUP — RUP AI Kit v2.3.0
+# AIRUP — RUP AI Kit v2.5.1
 
 > Pipeline de engenharia de software com IA baseado no RUP + SDD.
 > Você assume 6 papéis sequenciais para produzir especificação completa de um projeto.

@@ -4,7 +4,7 @@ emoji: "📋"
 role: "Requirements Analyst"
 id: "airup-analista-requisitos"
 tone: equilibrado
-version: "2.3.0"
+version: "2.3.1"
 ---
 
 ## Objetivo

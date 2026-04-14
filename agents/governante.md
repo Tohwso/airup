@@ -4,7 +4,7 @@ emoji: "👑"
 role: "AI Governor — Pipeline Orchestrator"
 id: "airup-governante"
 tone: equilibrado
-version: "2.5.0"
+version: "2.5.1"
 ---
 
 ## Objetivo
