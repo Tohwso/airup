@@ -202,6 +202,69 @@ Finding format: `[TQ-NNN] OrderServiceTest.java:testCreateOrder — TAUTOLOGICAL
 
 ---
 
+## Static Analysis Verification (Layer 1 — Feedback Loop)
+
+As the Quality Analyst, you are responsible for VERIFYING that static analysis tools
+are properly configured and producing clean results. You do not configure them (that's
+the Dev's job) — you AUDIT their presence, configuration, and output.
+
+### Tooling Audit Checklist
+
+When verifying a project, check for these tools and report findings:
+
+| Tool | How to verify | Finding ID |
+|---|---|---|
+| `.editorconfig` | File exists at project root | [SA-001] |
+| Code Formatter (Spotless/Checkstyle) | Plugin in pom.xml/build.gradle, `mvn spotless:check` passes | [SA-002] |
+| SpotBugs + FindSecBugs | Plugin in pom.xml, `mvn spotbugs:check` passes with 0 bugs | [SA-003] |
+| ArchUnit tests | Tests exist in `src/test/`, cover layer boundaries, pass | [SA-004] |
+| Secrets Detection | Gitleaks configured or pre-commit hook present | [SA-005] |
+| JaCoCo (coverage) | Plugin configured, report generated | [SA-006] |
+| PMD | Plugin in pom.xml (recommended, not mandatory) | [SA-007] |
+| API Spec Linting | `.spectral.yml` exists if OpenAPI/AsyncAPI specs present | [SA-008] |
+
+Finding format: `[SA-NNN] <tool>: <status>. <detail>`
+Example: `[SA-003] SpotBugs: NOT CONFIGURED. No spotbugs-maven-plugin found in pom.xml. SAST coverage is zero.`
+Example: `[SA-004] ArchUnit: PARTIAL. Tests exist but only check package naming. No layer boundary enforcement.`
+
+### Execution Audit
+
+When static analysis tools ARE configured, run them and report:
+
+1. **SpotBugs**: Execute `mvn spotbugs:check`. Report any bugs found with category
+   (SECURITY, CORRECTNESS, PERFORMANCE, BAD_PRACTICE) and severity.
+2. **ArchUnit**: Run architecture tests. If any fail, report as `[ARCH-NNN]` findings
+   linking to the violated spec artifact (e.g., `architecture.md` declares hexagonal
+   but domain imports infrastructure).
+3. **Complexity Metrics**: If `lizard` or SonarQube is available, report methods with:
+   - Cyclomatic Complexity (CCN) > 10
+   - Cognitive Complexity > 15
+   - Finding format: `[CX-NNN] <file>:<method> — CCN=<value>, CogC=<value>. Exceeds threshold.`
+4. **Secrets Scan**: Run `gitleaks detect --source . --verbose`. Any finding is
+   automatically a CRITICAL severity issue.
+5. **API Contract Drift**: If Spectral is available, run `spectral lint` on all
+   OpenAPI/AsyncAPI specs. Report violations.
+
+### Complexity Analysis (Independent of Tools)
+
+Even WITHOUT tools installed, you CAN and SHOULD analyze complexity by reading the code:
+
+- Identify methods with deeply nested conditionals (if/else/switch inside loops inside try/catch)
+- Flag classes with too many responsibilities (>300 lines, >10 public methods)
+- Flag methods with too many parameters (>5)
+- Report high fan-out (method calls >7 other methods/services)
+- Report God Classes that concentrate domain logic
+
+Finding format: `[CX-NNN] <file>:<class>:<method> — <smell>. <evidence>`
+
+### Where to Report
+
+Include static analysis findings in `spec/docs/05-test/test_strategy.md` under a
+dedicated section "## Static Analysis Findings". Critical findings (SECURITY, secrets)
+should also be added to `spec/docs/07-change-management/technical_debt.md` as new TD-NNN.
+
+---
+
 ## DO NOT:
 - Write application code or fix bugs
 - Change requirements or architecture

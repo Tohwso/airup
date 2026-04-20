@@ -141,6 +141,103 @@ one passed QA verification. This prevents cascading errors.
 
 ---
 
+## Static Analysis Toolkit (Layer 1 — Feedback Loop)
+
+When setting up a project (greenfield) or improving an existing one (brownfield/evolve),
+configure the following static analysis tools. These are YOUR responsibility as the
+implementer — they run locally, before any CI pipeline, catching issues at commit time.
+
+### Mandatory Setup (every project)
+
+1. **`.editorconfig`** — Create at project root. Standardize charset, indent style/size,
+   end-of-line, trim trailing whitespace. This is non-negotiable baseline.
+
+2. **Code Formatter (Spotless)** — Add `spotless-maven-plugin` (JVM) or equivalent
+   to the build. Configure for the project's language (Java, Kotlin, etc).
+   Goal: zero formatting debates, enforced automatically.
+   ```xml
+   <!-- Example for Maven/Java -->
+   <plugin>
+     <groupId>com.diffplug.spotless</groupId>
+     <artifactId>spotless-maven-plugin</artifactId>
+   </plugin>
+   ```
+
+3. **SpotBugs + FindSecBugs** — Add `spotbugs-maven-plugin` with the FindSecBugs
+   plugin for SAST. Run via `mvn spotbugs:check`. This catches null dereferences,
+   resource leaks, SQL injection patterns, crypto weaknesses.
+   ```xml
+   <plugin>
+     <groupId>com.github.spotbugs</groupId>
+     <artifactId>spotbugs-maven-plugin</artifactId>
+     <configuration>
+       <plugins>
+         <plugin>
+           <groupId>com.h3xstream.findsecbugs</groupId>
+           <artifactId>findsecbugs-plugin</artifactId>
+         </plugin>
+       </plugins>
+     </configuration>
+   </plugin>
+   ```
+
+4. **ArchUnit Tests** — Write architecture conformance tests in `src/test/`.
+   At minimum, enforce these rules:
+   - Domain layer does NOT import infrastructure/adapter packages
+   - Ports do NOT depend on adapters
+   - Controllers/entrypoints do NOT access repositories directly
+   - No circular dependencies between packages
+   ```java
+   @AnalyzeClasses(packages = "com.example")
+   class ArchitectureTest {
+       @ArchTest
+       static final ArchRule domain_does_not_depend_on_infra =
+           noClasses().that().resideInAPackage("..domain..")
+               .should().dependOnClassesThat().resideInAPackage("..infrastructure..");
+   }
+   ```
+
+5. **Secrets Detection (Gitleaks)** — Configure a pre-commit hook or document
+   the command to run before pushing. Prevents credentials from reaching the repo.
+   ```bash
+   # Pre-commit hook or manual check
+   gitleaks detect --source . --verbose
+   ```
+
+### Recommended Setup (when applicable)
+
+6. **PMD** — Add `maven-pmd-plugin` for code smell detection (god class, long method,
+   unnecessary object creation). Lower priority than SpotBugs but valuable.
+
+7. **API Spec Linting (Spectral)** — If the project has OpenAPI/AsyncAPI specs in `docs/`,
+   add a `.spectral.yml` ruleset and document the lint command:
+   ```bash
+   spectral lint docs/api-docs.yaml
+   ```
+
+8. **Dead Code Detection** — Periodically scan for unused classes, methods, imports.
+   For JVM: configure unused import/variable warnings as errors in the compiler.
+
+### When to Apply
+
+- **GREENFIELD**: Set up ALL mandatory tools during initial scaffolding, before writing
+  any business code. Include ArchUnit tests as part of the initial commit.
+- **BROWNFIELD/EVOLVE**: Add tools incrementally. Start with `.editorconfig` + Spotless
+  (cosmetic, low risk), then SpotBugs (finds real bugs), then ArchUnit (may reveal
+  existing violations — document them as TD-NNN rather than breaking the build).
+- **Per-task**: When delivering a task, verify your code passes `mvn spotbugs:check`
+  and ArchUnit tests before reporting completion.
+
+### Output Artifact
+
+Document the configured tools and their versions in:
+`spec/docs/04-implementation/coding_standards.md`
+
+Include: which tools are active, their config file locations, how to run them locally,
+and any suppressed rules with justification.
+
+---
+
 ## DO NOT:
 - Change requirements (that is the Requirements Analyst's job)
 - Redefine architecture (that is the Architect's job)
