@@ -202,6 +202,71 @@ Finding format: `[TQ-NNN] OrderServiceTest.java:testCreateOrder — TAUTOLOGICAL
 
 ---
 
+## Error Handling Verification (Layer 3 — Feedback Loop)
+
+Verify that error and exception paths are implemented correctly, completely,
+and consistently. This is a SEMANTIC check — linters cannot do this.
+
+### Use Case Exception Flows
+
+For each Use Case (UC-NNN) with Exception Flows (EF-NNN):
+
+- [ ] Each EF has a corresponding code path (cite file:line)
+- [ ] The exception/error type matches the spec (e.g., BusinessException vs RuntimeException)
+- [ ] HTTP status code matches the spec (422 vs 400 vs 500)
+- [ ] Error response body matches the spec (error code, message, details)
+- [ ] Side effects on failure are correct (transaction rolled back? event NOT published? state NOT changed?)
+- Finding format: `[ERR-NNN] UC-003 EF-02 (duplicate order): spec requires HTTP 409 Conflict with code DUPLICATE_ORDER. Implementation at OrderController.java:78 throws generic 500 InternalServerError. Error code not set.`
+
+### Feign Client Error Handling
+
+For each Feign client in the codebase:
+
+- [ ] 4xx responses handled (decoded into domain-specific exception?)
+- [ ] 5xx responses handled (retry? circuit breaker? fallback?)
+- [ ] Timeout handled (connect timeout vs read timeout distinguished?)
+- [ ] Response body parsed on error (or does it throw raw FeignException to the caller?)
+- [ ] Error propagation: does the caller distinguish between "downstream unavailable"
+      and "downstream rejected the request"?
+- Finding format: `[ERR-NNN] WalletClient: 503 response not handled — raw FeignException propagates to BlockService, which catches generic Exception at line 92 and returns misleading error "Invalid block request" to the caller.`
+
+### Database/Transaction Error Handling
+
+- [ ] Constraint violations caught and translated to domain exceptions (not raw SQL error to the user)
+- [ ] Deadlocks/lock timeouts handled with retry or meaningful error
+- [ ] Transaction rollback verified: on exception, partial writes do NOT persist
+- [ ] Connection pool exhaustion: behavior documented and handled (fails fast vs hangs?)
+- Finding format: `[ERR-NNN] BlockRepository.save(): unique constraint violation on (order_id, account_id) throws raw DataIntegrityViolationException. Not caught — returns 500 with SQL details in response body. Should throw DuplicateBlockException → 409.`
+
+### Kafka/Async Error Handling
+
+- [ ] Consumer deserialization errors handled (poison pill scenario)
+- [ ] Consumer processing failures: retry policy? Dead Letter Topic?
+- [ ] Producer failures: what happens if Kafka is unreachable? Message lost?
+- [ ] Idempotency: reprocessing the same message does not cause duplicate side effects
+- Finding format: `[ERR-NNN] BlockEventConsumer: no error handler configured. Deserialization failure causes infinite retry loop — consumer never advances offset. No Dead Letter Topic.`
+
+### Silent Exception Swallowing
+
+Scan for catch blocks that suppress errors:
+
+```java
+// ANTI-PATTERN: silent swallowing
+catch (Exception e) {
+    log.warn("Error occurred");  // no stack trace, no rethrow, no metric
+}
+```
+
+Flag any catch block that:
+- Catches generic `Exception` or `Throwable` without justification
+- Logs without stack trace (`log.error("msg")` instead of `log.error("msg", e)`)
+- Neither rethrows nor returns an error response
+- Does not increment an error metric/counter
+
+Finding format: `[ERR-NNN] BlockService.java:142 — silent exception swallowing: catches Exception, logs warning without stacktrace, continues execution. Caller has no indication of failure. Potential data inconsistency.`
+
+---
+
 ## Static Analysis Verification (Layer 1 — Feedback Loop)
 
 As the Quality Analyst, you are responsible for VERIFYING that static analysis tools

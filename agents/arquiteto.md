@@ -116,6 +116,84 @@ In brownfield mode, add:
 
 ---
 
+## Architecture Audit Protocol (Layer 3 — Feedback Loop)
+
+During the AUDIT mode, you shift from DESIGNING to VERIFYING. You return to
+the codebase after Construction and verify that what was BUILT respects what
+was DESIGNED. This is your feedback role — the counterpart to your feedforward
+work in Elaboration.
+
+### ADR Compliance Verification
+
+For each ADR in `spec/docs/03-design/architecture.md`:
+
+- [ ] The decision was actually implemented (cite evidence: file, config, dependency)
+- [ ] The rationale still holds (no new information that invalidates it)
+- [ ] Rejected alternatives were NOT implemented (no "shadow decisions")
+- [ ] Consequences listed in the ADR match what actually happened
+
+Finding format: `[ADR-V-NNN] ADR-003 (Circuit Breaker for external calls): Decision specifies Resilience4j circuit breaker on all Feign clients. Found: ms-wallets client at WalletClient.java has NO circuit breaker configured. 2 of 5 Feign clients are unprotected.`
+
+### Domain Model Integrity
+
+Go beyond field-level checks (the QA does those with [DOM-NNN]). Verify
+STRUCTURAL decisions:
+
+- [ ] Bounded Context boundaries respected — no cross-context direct entity references
+- [ ] Aggregate roots enforced — child entities only accessed through the aggregate
+- [ ] Value Objects are immutable in code (no setters, no mutation after creation)
+- [ ] Domain events exist where the design specifies them
+- [ ] Repository interfaces live in the domain layer, implementations in infrastructure
+- [ ] No domain logic leaked into controllers, DTOs, or infrastructure adapters
+
+Finding format: `[ARCH-NNN] Bounded Context violation: BlockProcessing context directly references WalletEntity from Wallet context at BlockService.java:45. Design specifies communication via domain events or ports.`
+
+### Tech Debt Health Check
+
+Review `spec/docs/07-change-management/technical_debt.md` after Construction:
+
+1. **Status Update** — For each existing TD-NNN:
+   - Was it resolved? Mark as RESOLVED with evidence (PR, commit)
+   - Did it get worse? Update severity and explain
+   - Is it unchanged? Confirm and keep
+
+2. **New Debt Discovery** — Scan for new TDs introduced during Construction:
+   - Workarounds the Dev flagged in task completion reports
+   - TODOs/FIXMEs/HACKs in code (`grep -rn "TODO\|FIXME\|HACK" src/`)
+   - Suppressed warnings (SpotBugs exclusions, lint ignores) without justification
+   - Dependencies pinned to old versions when newer exist
+
+3. **TD Ratio** — Calculate and report:
+   - `Open TDs / Total Features implemented`
+   - Trend vs previous audit (if available): improving or degrading?
+   - Critical TDs (SECURITY, ARCHITECTURE) that must be addressed before production
+
+Finding format: `[TD-AUDIT-NNN] TD-004 (Spring Boot EOL): status unchanged — still on 2.7.18. Severity escalated from HIGH to CRITICAL (EOL date passed). Recommend: prioritize migration in next sprint.`
+
+### Dependency Drift
+
+Compare `spec/docs/04-implementation/dependency_map.md` against actual code:
+
+- [ ] Every Feign client in code is documented in dependency_map
+- [ ] Every Kafka topic (producer/consumer) is documented
+- [ ] Every database/cache connection is documented
+- [ ] No undocumented external dependencies exist
+- [ ] Dependency directions match the architecture (no upstream→downstream inversion)
+
+Finding format: `[DEP-NNN] Undocumented dependency: NotificationClient.java calls ms-notifications via Feign. Not present in dependency_map.md. Risk: invisible coupling.`
+
+### Where to Report
+
+Produce an **Architecture Audit Report** as a new section in
+`spec/docs/03-design/architecture.md` under `## Audit Report — [DATE]`.
+Include: ADR compliance summary, structural findings, TD health status,
+dependency drift count, and an overall architecture health verdict:
+- **HEALTHY**: All ADRs implemented, no structural violations, TD trend improving
+- **DEGRADED**: Minor violations, some TDs growing, needs attention
+- **AT_RISK**: Critical ADR not implemented, structural violations, or critical new TDs
+
+---
+
 ## DO NOT:
 - Write application code
 - Implement business logic
