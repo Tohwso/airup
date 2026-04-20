@@ -141,6 +141,108 @@ one passed QA verification. This prevents cascading errors.
 
 ---
 
+## Test Infrastructure Setup (Layer 2 — Feedback Loop)
+
+When setting up a project or improving test infrastructure, configure the
+foundational tools that enable the QA agent (and human testers) to run
+advanced tests. You build the INFRASTRUCTURE, QA writes the TESTS.
+
+### Integration Test Infrastructure
+
+1. **Testcontainers** — Add dependency for the project's databases and brokers.
+   Create an `AbstractIntegrationTest` base class that:
+   - Starts containers (MySQL/PostgreSQL/MongoDB, Kafka, Redis) via `@Testcontainers`
+   - Configures Spring context to use container connection strings
+   - Provides utility methods for data setup/teardown
+   ```java
+   @Testcontainers
+   @SpringBootTest
+   abstract class AbstractIntegrationTest {
+       @Container
+       static MySQLContainer<?> mysql = new MySQLContainer<>("mysql:8.0");
+       @Container
+       static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse("confluentinc/cp-kafka"));
+
+       @DynamicPropertySource
+       static void configure(DynamicPropertyRegistry registry) {
+           registry.add("spring.datasource.url", mysql::getJdbcUrl);
+           registry.add("spring.kafka.bootstrap-servers", kafka::getBootstrapServers);
+       }
+   }
+   ```
+
+2. **WireMock** — Add dependency and create a base setup for mocking external
+   Feign clients. For each Feign client in the project, document the stub setup:
+   ```java
+   @WireMockTest(httpPort = 8089)
+   class WalletClientIntegrationTest extends AbstractIntegrationTest {
+       // Stub: GET /wallets/{id}/balance returns 200
+       // Stub: GET /wallets/{id}/balance returns 503 (error scenario)
+   }
+   ```
+
+3. **Toxiproxy (for Chaos Testing)** — If the project has external dependencies
+   that need resilience testing, add Testcontainers Toxiproxy module. Create a
+   `docker-compose.chaos.yml` with proxies for each dependency:
+   ```yaml
+   # docker-compose.chaos.yml — ready-to-use chaos testing setup
+   services:
+     toxiproxy:
+       image: ghcr.io/shopify/toxiproxy:2.9.0
+       ports: ["8474:8474"]  # control API
+     # Proxied dependencies configured via toxiproxy API
+   ```
+   Include a shell script `scripts/chaos-setup.sh` that creates the proxies
+   and documents how to inject faults.
+
+### Performance Test Infrastructure
+
+4. **k6 Setup** — Create `tests/performance/` directory with:
+   - `docker-compose.perf.yml` — k6 + InfluxDB + Grafana pre-configured
+   - A `run-perf.sh` script accepting `--env`, `--duration`, `--vus` parameters
+   - Base k6 config file with shared settings
+   ```bash
+   # tests/performance/run-perf.sh
+   #!/bin/bash
+   ENV=${1:-qa}; DURATION=${2:-5m}; VUS=${3:-50}
+   k6 run --env BASE_URL="$ENV" --duration "$DURATION" --vus "$VUS" scripts/*.js
+   ```
+
+### Mutation Test Infrastructure
+
+5. **PIT (Pitest)** — Add `pitest-maven-plugin` to the build:
+   ```xml
+   <plugin>
+     <groupId>org.pitest</groupId>
+     <artifactId>pitest-maven-plugin</artifactId>
+     <configuration>
+       <targetClasses><param>com.example.domain.*</param></targetClasses>
+       <targetTests><param>com.example.*Test</param></targetTests>
+       <mutationThreshold>60</mutationThreshold>
+       <outputFormats><param>HTML</param><param>XML</param></outputFormats>
+     </configuration>
+   </plugin>
+   ```
+   Target domain and application layers — skip infrastructure adapters.
+
+### Contract Test Infrastructure
+
+6. **Pact** — Add `pact-jvm-consumer-junit5` dependency. For EACH Feign client
+   in the project:
+   - Create a consumer contract test in `tests/dev/contracts/`
+   - Generate the `.json` Pact file
+   - Document in `dependency_map.md` which contracts exist and their status
+   - Prepare a structured message for the provider team explaining what they
+     need to verify on their side
+
+### Output
+
+Document all test infrastructure in `spec/docs/04-implementation/coding_standards.md`
+under "## Test Infrastructure". Include: what's configured, how to run each tool,
+prerequisites (Docker, CLI tools), and any known limitations.
+
+---
+
 ## Static Analysis Toolkit (Layer 1 — Feedback Loop)
 
 When setting up a project (greenfield) or improving an existing one (brownfield/evolve),

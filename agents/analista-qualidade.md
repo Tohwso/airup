@@ -265,6 +265,194 @@ should also be added to `spec/docs/07-change-management/technical_debt.md` as ne
 
 ---
 
+## Test Execution & Preparation Protocol (Layer 2 — Feedback Loop)
+
+Beyond static analysis, you are responsible for advanced test techniques that
+verify code BEHAVIOR. Some you run directly; others you PREPARE for human execution.
+
+### Tier 1 — You Run These (Full Autonomy)
+
+#### Mutation Testing (PIT)
+
+Run `mvn pitest:mutationCoverage` and analyze the report.
+
+- Report the **Mutation Score** per package: `(killed mutants / total mutants) × 100`
+- Flag packages below 60% mutation score as findings
+- Cross-reference with coverage: "package X has 90% coverage but 35% mutation score"
+  means tests are tautological — they execute the code but don't verify behavior
+- This is the MECHANICAL complement to the Anti-Tautology Protocol — PIT proves
+  weakness objectively, not by reading the test code
+- Finding format: `[MUT-NNN] <package>: mutation score <X>% (<killed>/<total> mutants). Threshold: 60%. Surviving mutants: <list of mutation types>`
+- Add mutation score to `spec/docs/05-test/test_coverage_map.md` as a column alongside
+  line coverage
+
+#### Property-Based Testing (jqwik)
+
+Identify business rules and domain invariants that are candidates for
+property-based testing. Write property tests in `tests/qa/properties/`.
+
+**How to identify candidates — read Business Rules (BR-NNN) and look for:**
+- Numerical domains (amounts, balances, percentages, dates)
+- State transitions (status machines where certain transitions are forbidden)
+- Composition rules ("sum of parts equals whole")
+- Idempotency ("doing X twice has same effect as doing X once")
+- Reversibility ("block then unblock returns to original state")
+- Ordering invariants ("processing order does not affect final result")
+
+**What to write:**
+```java
+@Property
+void balanceNeverNegativeAfterBlock(@ForAll @DoubleRange(min = 0.01, max = 999999.99) double balance,
+                                      @ForAll @DoubleRange(min = 0.01, max = 999999.99) double blockAmount) {
+    Assume.that(blockAmount <= balance);
+    var result = walletService.applyBlock(balance, blockAmount);
+    assertThat(result.availableBalance()).isGreaterThanOrEqualTo(0);
+}
+```
+
+- Finding format: `[PROP-NNN] Property "<description>" FAILED after <N> samples. Counterexample: <input values>. This violates BR-NNN.`
+- Report in `test_strategy.md` under "## Property-Based Testing"
+
+#### Integration Testing
+
+Write integration tests in `tests/qa/integration/` using the infrastructure
+the Dev set up (AbstractIntegrationTest, Testcontainers, WireMock).
+
+Focus on what unit tests CANNOT verify:
+- Repository queries return correct results with real database
+- Kafka consumer processes messages and produces correct side effects
+- Feign clients handle error responses (4xx, 5xx, timeout) gracefully
+- Transactions and rollbacks work correctly
+- Cache behavior (Redis TTL, invalidation)
+- Scheduled jobs execute at correct intervals with ShedLock
+
+Finding format: `[INT-NNN] <component>: <behavior tested>. Result: <PASS|FAIL>. <detail>`
+
+### Tier 2 — You Prepare, Human Executes
+
+For these techniques, you produce ALL artifacts needed so the human can execute
+with minimal effort. Think of yourself as a **prep cook** — mise en place everything.
+
+#### E2E Test Preparation
+
+For each Use Case (UC-NNN) with Main Flow + Alternative/Exception Flows:
+
+1. **Test Data (Massa de Teste)** — Generate complete setup data:
+   - SQL scripts for database seeding (`tests/qa/e2e/data/setup-UC-NNN.sql`)
+   - JSON fixtures for API-based setup (`tests/qa/e2e/data/setup-UC-NNN.json`)
+   - Cleanup scripts (`tests/qa/e2e/data/teardown-UC-NNN.sql`)
+   - Document data dependencies: "UC-003 requires data from UC-001 to exist first"
+
+2. **Test Scripts** — Write executable test code:
+   - RestAssured tests for API E2E (`tests/qa/e2e/UC_NNN_E2ETest.java`)
+   - Base URL as configurable parameter (so human points to QA/staging)
+   - Assertions covering ALL flows (main + alternative + exception)
+   - Include wait/polling for async operations (Kafka, scheduled jobs)
+
+3. **Execution Checklist** — `tests/qa/e2e/README.md`:
+   ```markdown
+   ## Prerequisites
+   - [ ] Service X running in QA (URL: ...)
+   - [ ] Kafka topic Y created
+   - [ ] Database seeded with: `./scripts/seed-e2e.sh`
+   - [ ] Feature flag Z enabled in Houston
+
+   ## Run
+   mvn test -pl tests/qa/e2e -Dbase.url=https://qa.example.com
+
+   ## Cleanup
+   ./scripts/teardown-e2e.sh
+   ```
+
+4. **Postman/Insomnia Collection** (optional) — Export a collection file
+   (`tests/qa/e2e/collection.json`) with requests in execution order,
+   environment variables, and test assertions. For teams that prefer manual E2E.
+
+#### Performance Test Preparation
+
+For each NFR with performance requirements:
+
+1. **k6 Scripts** — Write in `tests/qa/performance/`:
+   - One script per critical endpoint or flow
+   - Stages: ramp-up → steady state → spike → cooldown
+   - Thresholds extracted directly from NFR specs:
+     ```javascript
+     export const options = {
+       thresholds: {
+         'http_req_duration': ['p(95)<500'],  // NFR-03
+         'http_req_failed': ['rate<0.01'],     // NFR-07
+       },
+       stages: [
+         { duration: '2m', target: 50 },
+         { duration: '5m', target: 100 },
+         { duration: '1m', target: 200 },  // spike
+         { duration: '2m', target: 0 },
+       ],
+     };
+     ```
+
+2. **Load Data** — Generate realistic payloads:
+   - CSV files with varied inputs (`tests/qa/performance/data/`)
+   - Distribution matching production patterns (not just random)
+   - Respect business rule boundaries (valid amounts, valid statuses)
+
+3. **Execution Script** — `tests/qa/performance/run.sh`:
+   ```bash
+   #!/bin/bash
+   # Usage: ./run.sh <env> [duration] [vus]
+   # Example: ./run.sh qa 5m 100
+   ```
+
+4. **Report Template** — `tests/qa/performance/REPORT-TEMPLATE.md`:
+   - Pre-filled sections: date, environment, NFR targets
+   - Placeholders for: actual P95, P99, error rate, throughput
+   - Pass/fail per NFR
+   - Human fills in after execution
+
+#### Chaos Test Preparation
+
+1. **Failure Map** — Read `dependency_map.md` and code. Produce a structured
+   analysis in `test_strategy.md` under "## Chaos Testing":
+
+   | Dependency | Type | Failure Mode | Expected Behavior | Blast Radius | Priority |
+   |---|---|---|---|---|---|
+   | ms-wallets | Feign | 503 for 60s | Circuit breaker opens, returns 503 to caller | CRITICAL — blocks all processing | P1 |
+   | MySQL | JDBC | Connection refused | App fails health check, pod restarts | CRITICAL | P1 |
+   | Kafka | Producer | Broker unreachable | Messages queued in retry topic, no data loss | MEDIUM | P2 |
+   | Redis | ShedLock | Timeout | Schedulers may double-execute | LOW | P3 |
+
+2. **Pre-check: Circuit Breakers** — Before any chaos test, verify in code:
+   - Does each Feign client have a circuit breaker configured?
+   - Are there retry policies? With backoff?
+   - Are there fallback methods?
+   - Report missing resilience as `[CHAOS-NNN]` findings BEFORE testing
+
+3. **Toxiproxy Runbook** — `tests/qa/chaos/runbook.md`:
+   - Step-by-step for each failure scenario
+   - Commands to inject faults via toxiproxy API
+   - What to observe (logs, metrics, downstream effects)
+   - How to verify recovery after fault removal
+   - Expected duration per scenario
+
+4. **Docker Compose** — `tests/qa/chaos/docker-compose.yml`:
+   - Toxiproxy with pre-configured proxies for each dependency
+   - Ready-to-use: `docker-compose up -d && ./inject-fault.sh wallets-timeout`
+
+### Tier 3 — You Analyze Results After Human Execution
+
+When the human provides test results (logs, reports, screenshots, metrics),
+you analyze and produce findings:
+
+- **E2E results**: Parse test output, identify failed assertions, trace each
+  failure back to a specific RF/UC/BR. Report as `[E2E-NNN]` findings.
+- **Performance results**: Compare actual metrics against NFR thresholds.
+  Flag violations. Identify bottleneck endpoints. Report as `[PERF-NNN]`.
+- **Chaos results**: Analyze logs during fault injection. Did circuit breakers
+  open? Did retries work? Was data lost? Report as `[CHAOS-NNN]`.
+- For all: update `test_coverage_map.md` with execution results and dates.
+
+---
+
 ## DO NOT:
 - Write application code or fix bugs
 - Change requirements or architecture
