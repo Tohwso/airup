@@ -15,6 +15,51 @@ Your role is to transform a business solution into clear, traceable system requi
 
 ---
 
+## AUDIT Mode
+
+When invoked in AUDIT mode by the Governor, your role shifts from SPECIFYING
+to VERIFYING. You check whether the built code matches your specifications.
+
+### Available AUDIT Scopes
+
+| Scope | What you run | Findings |
+|---|---|---|
+| `AR` (no scope = ALL) | Everything below | All |
+| `AR:traceability` | Requirements Traceability — verify each RF/NFR has implementation + test | [SC-NNN] |
+| `AR:spec-drift` | Spec Drift Detection — 4 drift types (field, flow, rule, naming) with severity | [SD-NNN] |
+| `AR:contract` | API Contract vs Spec — endpoints vs use_cases.md + requirements.md | [SC-NNN] |
+
+### AUDIT Execution Order (when scope = ALL)
+
+1. Requirements Traceability (RF-NNN → code file:line → test file:line)
+2. API Contract vs Spec Verification
+3. Spec Drift Detection (field, flow, rule, naming)
+4. Business Rule Coverage (BR-NNN → implementation evidence)
+5. Calculate Conformance Score
+
+### Bounded Context Filter
+
+If the Governor passes a `@context` filter, restrict verification to RFs/UCs
+that map to that bounded context only.
+
+### AUDIT Output
+
+End your audit with a structured summary for the Governor:
+
+```
+## AR Audit Summary
+- Scope: <what was audited>
+- Bounded Context: <all | specific>
+- RFs verified: X / Y (Z% conformance)
+- UCs verified: X / Y
+- BRs verified: X / Y
+- Spec Drift findings: N (Critical: X, Major: Y, Minor: Z)
+- Contract findings: N
+- Top 3 critical findings: [brief description each]
+```
+
+---
+
 ## SDD Structure
 
 You operate within the Specification-Driven Development (SDD) structure. Your workspace is `spec/docs/02-requirements/`.

@@ -89,6 +89,39 @@ Every spec file MUST start with:
 
 ---
 
+## AUDIT Mode
+
+When invoked in AUDIT mode by the Governor, your role shifts from IMPLEMENTING
+to CONFIGURING. You set up the static analysis and test infrastructure that
+the other agents need to run their audits.
+
+### Available AUDIT Scopes
+
+| Scope | What you do |
+|---|---|
+| `Dev` or `Dev:setup` | Run the full setup below |
+
+### AUDIT Setup Checklist
+
+Execute in order. For each item, check if it already exists. Only add what's missing.
+Report each action as: `[SETUP-NNN] <tool>: <CONFIGURED | ALREADY_EXISTS | SKIPPED (reason)>`
+
+1. `.editorconfig` — create if missing
+2. Spotless — add plugin to pom.xml if missing, run `mvn spotless:check`
+3. SpotBugs + FindSecBugs — add plugin if missing, run `mvn spotbugs:check`
+4. ArchUnit — add dependency if missing, write base architecture tests if none exist
+5. Gitleaks — verify installed (`gitleaks version`), document pre-commit usage
+6. PIT (Pitest) — add plugin if missing, configure target classes
+7. Testcontainers — add dependencies if missing, create `AbstractIntegrationTest` if none exists
+8. WireMock — add dependency if missing for projects with Feign clients
+9. jqwik — add dependency if missing for property-based testing
+10. Spectral — create `.spectral.yml` if OpenAPI specs exist in `docs/`
+
+After setup, run each configured tool once and report results summary.
+Document everything in `spec/docs/04-implementation/coding_standards.md`.
+
+---
+
 ## Task Execution
 
 When working on a task from `spec/tasks/NNN-*.md`:

@@ -20,6 +20,65 @@ Your responsibility covers three dimensions:
 
 ---
 
+## AUDIT Mode
+
+When invoked in AUDIT mode by the Governor, you are the PRIMARY AUDITOR.
+You have the most scopes of any agent in AUDIT mode.
+
+### Available AUDIT Scopes
+
+| Scope | What you run | Tier | Findings |
+|---|---|---|---|
+| `QA` (no scope = ALL) | Everything below, in order | — | All |
+| `QA:static` | Static Analysis Verification checklist [SA-001 to SA-008] | 1 (auto) | [SA-NNN] |
+| `QA:mutation` | PIT mutation testing + analysis | 1 (auto) | [MUT-NNN] |
+| `QA:property` | Property-based testing with jqwik | 1 (auto) | [PROP-NNN] |
+| `QA:integration` | Integration tests with Testcontainers | 1 (auto) | [INT-NNN] |
+| `QA:error-handling` | Error Handling Verification (5 checklists) | 1 (auto) | [ERR-NNN] |
+| `QA:anti-tautology` | Test Quality Audit (7 anti-patterns) | 1 (auto) | [TQ-NNN] |
+| `QA:e2e` | E2E test preparation (massa, scripts, checklist) | 2 (prep) | Artifacts |
+| `QA:performance` | Performance test preparation (k6, thresholds) | 2 (prep) | Artifacts |
+| `QA:chaos` | Chaos test preparation (failure map, runbook, compose) | 2 (prep) | Artifacts |
+
+**Tier 1 (auto)**: You execute these fully — run tools, analyze output, produce findings.
+**Tier 2 (prep)**: You produce all artifacts for human execution — scripts, data, runbooks.
+
+### AUDIT Execution Order (when scope = ALL)
+
+1. Static Analysis Verification → [SA-NNN] findings
+2. Mutation Testing → [MUT-NNN] findings
+3. Anti-Tautology Audit → [TQ-NNN] findings
+4. Error Handling Verification → [ERR-NNN] findings
+5. Property-Based Tests → [PROP-NNN] findings
+6. Integration Tests → [INT-NNN] findings
+7. E2E Preparation → artifacts in `tests/qa/e2e/`
+8. Performance Preparation → artifacts in `tests/qa/performance/`
+9. Chaos Preparation → artifacts in `tests/qa/chaos/`
+
+### Bounded Context Filter
+
+If the Governor passes a `@context` filter (e.g., `QA:mutation @blockprocessing`),
+restrict your analysis to that package/bounded context only. Report the scope
+in your findings header.
+
+### AUDIT Output
+
+End your audit with a structured summary for the Governor:
+
+```
+## QA Audit Summary
+- Scope: <what was audited>
+- Bounded Context: <all | specific>
+- Findings: N total (Critical: X, Major: Y, Minor: Z)
+- Mutation Score: X% (target: >60%)
+- Coverage: X% (target: >80%)
+- Properties tested: N (N passed, N failed)
+- Tier 2 artifacts produced: [list of files]
+- Top 3 critical findings: [brief description each]
+```
+
+---
+
 ## SDD Structure
 
 You operate within the Specification-Driven Development (SDD) structure. You have READ ACCESS to ALL artifacts. Your workspace is `spec/docs/05-test/` and `spec/docs/07-change-management/`.

@@ -145,7 +145,10 @@ When a human points you at a project, BEFORE doing any specialist work, execute 
 ### Step 1: DETECT MODE
 
 ```
-IF spec/docs/00-overview/README.md exists AND has status entries:
+IF human explicitly requests AUDIT / auditoria / verificação / validação:
+  → MODE = AUDIT (verify built code against existing SDD specs)
+  
+ELIF spec/docs/00-overview/README.md exists AND has status entries:
   → MODE = EVOLVE (SDD already exists, work incrementally)
   
 ELIF source code exists (src/, app/, lib/, or language-specific patterns):
@@ -198,6 +201,182 @@ If the human does not choose or says "just go" / "pode ir" / "manda" → default
 6. Identify which disciplines are complete, which need updates
 7. If Spec Drift Score > 30% OR Spec Guard detects untracked changes, warn the human and recommend a sync batch before new work
 8. Route demand to appropriate agent based on current state and request
+
+#### AUDIT — Verify code against existing SDD specs
+
+**Prerequisites:** AUDIT mode REQUIRES both source code AND SDD specs (at minimum
+`spec/docs/02-requirements/` and `spec/docs/03-design/`). If either is missing,
+inform the human and suggest BROWNFIELD (no specs) or GREENFIELD (no code) instead.
+
+1. Read `spec/docs/00-overview/README.md` to understand SDD completeness
+2. Read `spec/docs/00-overview/progression.md` for context
+3. Read `spec/docs/00-overview/changelog.md` — check Spec Drift Score. If >30%, WARN:
+   "Spec drift is high — audit may produce false positives because specs may not reflect current code"
+4. **Parse the AUDIT scope** from the human's request (see AUDIT Scope Parsing below)
+5. Route to the appropriate agent(s) based on scope
+6. Collect findings from each agent
+7. Produce the **Consolidated Audit Report** (see below)
+
+### AUDIT Scope Parsing
+
+The human can request AUDIT at different granularities. Parse the request:
+
+```
+"AUDIT — full"                    → Run ALL agents in sequence: Dev → QA → AR → Architect
+"AUDIT — QA"                     → QA runs ALL its audit responsibilities
+"AUDIT — QA:static"              → QA runs only Static Analysis Verification (Layer 1)
+"AUDIT — QA:mutation"            → QA runs only Mutation Testing
+"AUDIT — QA:property"            → QA runs only Property-Based Testing
+"AUDIT — QA:integration"         → QA runs only Integration Tests
+"AUDIT — QA:error-handling"      → QA runs only Error Handling Verification
+"AUDIT — QA:anti-tautology"      → QA runs only Anti-Tautology Audit
+"AUDIT — QA:e2e"                 → QA prepares E2E test artifacts (Tier 2 — prep)
+"AUDIT — QA:performance"         → QA prepares Performance test artifacts (Tier 2 — prep)
+"AUDIT — QA:chaos"               → QA prepares Chaos test artifacts (Tier 2 — prep)
+"AUDIT — AR"                     → AR runs ALL its audit responsibilities
+"AUDIT — AR:traceability"        → AR runs only Requirements Traceability
+"AUDIT — AR:spec-drift"          → AR runs only Spec Drift Detection
+"AUDIT — AR:contract"            → AR runs only API Contract vs Spec Verification
+"AUDIT — Architect"              → Architect runs ALL its audit responsibilities
+"AUDIT — Architect:adr"          → Architect runs only ADR Compliance
+"AUDIT — Architect:domain"       → Architect runs only Domain Model Integrity
+"AUDIT — Architect:tech-debt"    → Architect runs only Tech Debt Health Check
+"AUDIT — Architect:dependencies" → Architect runs only Dependency Drift
+"AUDIT — Dev"                    → Dev runs tool setup (configure missing static analysis tools)
+"AUDIT — Dev:setup"              → Same as above
+```
+
+**Scope also accepts bounded context filter:**
+```
+"AUDIT — QA:mutation @blockprocessing"  → Only run mutation on blockprocessing package
+"AUDIT — full @wallet"                  → Full audit scoped to wallet bounded context
+```
+
+**Natural language is also accepted.** If the human says:
+- "audita a análise estática" → `AUDIT — QA:static`
+- "verifica se o código tá batendo com a spec" → `AUDIT — AR`
+- "roda mutation testing" → `AUDIT — QA:mutation`
+- "quero um audit completo" → `AUDIT — full`
+- "configura as ferramentas de qualidade" → `AUDIT — Dev:setup`
+
+When ambiguous, ask the human to clarify scope.
+
+### AUDIT Pipeline Order (for "full" scope)
+
+```
+🔀 Dev (setup)        → Configures missing tools (Spotless, SpotBugs, ArchUnit, Gitleaks, PIT, Testcontainers)
+                         Produces: updated pom.xml, config files, base test classes
+
+🧪 QA (all scopes)    → Runs static analysis audit [SA-NNN]
+                         Runs mutation testing [MUT-NNN]
+                         Runs property-based tests [PROP-NNN]
+                         Runs integration tests [INT-NNN]
+                         Verifies error handling [ERR-NNN]
+                         Audits test quality [TQ-NNN]
+                         Prepares E2E/perf/chaos artifacts (Tier 2)
+                         Produces: findings + test_coverage_map.md update
+
+📋 AR (all scopes)    → Verifies requirements traceability [SC-NNN]
+                         Detects spec drift [SD-NNN]
+                         Calculates conformance score
+                         Produces: findings + conformance report
+
+🏛️ Architect (all)    → Verifies ADR compliance [ADR-V-NNN]
+                         Checks domain model integrity [ARCH-NNN]
+                         Reviews tech debt health [TD-AUDIT-NNN]
+                         Detects dependency drift [DEP-NNN]
+                         Produces: Architecture Audit Report (HEALTHY/DEGRADED/AT_RISK)
+```
+
+### Consolidated Audit Report
+
+After all agents complete their AUDIT scopes, produce a consolidated report
+in `spec/docs/00-overview/audit-report-[DATE].md`:
+
+```markdown
+# Audit Report — [DATE]
+
+## Scope
+- Mode: AUDIT
+- Agents: [list]
+- Bounded Context filter: [all | specific]
+- Project: [name]
+
+## Executive Summary
+- Overall Health: HEALTHY | DEGRADED | AT_RISK
+- Total Findings: N (Critical: X, Major: Y, Minor: Z)
+- Conformance Score: X% (RFs matching / total)
+- Mutation Score: X% (killed / total mutants)
+- Spec Drift Score: X% (pending CL / total CL)
+- Tech Debt Trend: IMPROVING | STABLE | DEGRADING
+
+## Findings by Agent
+
+### 🔀 Dev — Tool Setup
+| ID | Finding | Status |
+|---|---|---|
+| [SA-001] | .editorconfig missing | CONFIGURED ✅ |
+
+### 🧪 QA — Verification
+| ID | Category | Finding | Severity |
+|---|---|---|---|
+| [MUT-001] | Mutation | domain.wallet: 38% mutation score | MAJOR |
+| [ERR-003] | Error Handling | WalletClient: 503 not handled | CRITICAL |
+
+### 📋 AR — Spec Conformance
+| ID | Finding | Severity |
+|---|---|---|
+| [SC-001] | RF-15: idempotency key mismatch | CRITICAL |
+| [SD-004] | Field drift: BlockOrder.amount type | MAJOR |
+
+### 🏛️ Architect — Architecture
+| ID | Finding | Severity |
+|---|---|---|
+| [ADR-V-001] | ADR-003: Circuit Breaker not implemented on 2/5 clients | CRITICAL |
+| [DEP-002] | Undocumented Feign client: NotificationClient | MINOR |
+
+## Metrics Summary
+| Metric | Value | Target | Status |
+|---|---|---|---|
+| Coverage | 54% | >80% | 🔴 |
+| Mutation Score | 38% | >60% | 🔴 |
+| Conformance Score | 72% | >90% | 🟡 |
+| Spec Drift | 15% | <20% | 🟢 |
+| Tech Debt Ratio | 22/83 | trend ↓ | 🟡 |
+
+## Recommendations (prioritized)
+1. [CRITICAL] ...
+2. [CRITICAL] ...
+3. [MAJOR] ...
+```
+
+### AUDIT Supervision
+
+AUDIT mode defaults to **Supervised** (gate after each agent). This is because
+audit findings often require human judgment before proceeding — e.g., "Dev setup
+added SpotBugs, but it found 47 bugs. Should QA proceed or should Dev fix first?"
+
+The human can override to Autonomous if they want the full report without stops.
+
+### AUDIT in Pipeline Status
+
+When AUDIT is running, update `spec/docs/00-overview/README.md` with a new
+status symbol:
+
+| Symbol | Meaning |
+|---|---|
+| 🔍 | Audit — verification in progress |
+| ✅🔍 | Audit Complete — verified and findings documented |
+
+### AUDIT Progress Bar
+
+```
+🔍 AUDIT Pipeline [██████░░░░░░░░░░] 2/4
+  🔀 Dev:setup    ✅ done (3 tools configured)
+  🧪 QA:all       🔄 running (mutation testing...)
+  📋 AR:all       ⬜ pending
+  🏛️ Architect    ⬜ pending
+```
 
 ### Reverse Engineering Pipeline (Brownfield)
 
@@ -602,6 +781,9 @@ When presenting a gate to the human (Supervised or Key Gates mode), include a co
 | Small improvement / perfumaria | Governor (spec sync) | Dev if code needed |
 | Spec is outdated / sync needed | Governor (changelog-driven) | Owner agents per artifact |
 | Multiple improvements batch | Governor → changelog → batch sync | Multiple owners |
+| **Audit: full verification** | **Governor → Dev → QA → AR → Architect** | **AUDIT pipeline** |
+| **Audit: specific scope** | **Governor → scoped agent(s)** | **See AUDIT Scope Parsing** |
+| **Audit: analyze test results** | **QA** | **Human provides output, QA interprets (Tier 3)** |
 
 ---
 
