@@ -459,6 +459,71 @@ with minimal effort. Think of yourself as a **prep cook** — mise en place ever
 
 #### E2E Test Preparation
 
+There are TWO modes of E2E testing. Prefer **E2E Local** when possible.
+
+##### E2E Local Test Pattern (Preferred)
+
+Write a self-contained `@SpringBootTest` that simulates the complete lifecycle
+of a domain entity by orchestrating services directly — no real infrastructure needed.
+
+**Architecture:**
+- DB → H2 in-memory (or Testcontainers if schema-specific)
+- Kafka → `@EmbeddedKafka`
+- External services → WireMock (stubs per scenario)
+- Schedulers → invoke services directly (never wait for timers)
+
+**Structure:**
+```java
+class <Entity>E2ETest extends ApplicationTests {  // inherits WireMock + EmbeddedKafka + H2
+
+    // ── Helpers ──
+    // receiveLot()           → simulates Kafka event arrival
+    // readLot()              → invokes ReadOrdersService directly (simulates scheduler)
+    // processAll()           → invokes BatchProcessingService directly
+    // simulateReplication()  → manually clears pending flags (simulates async callback)
+    // stubPersonFound()      → WireMock stub for happy path
+    // stubPersonNotFound()   → WireMock stub for error path
+
+    @Nested class HappyPath {
+        @Test void shouldProcessEndToEnd() {
+            // Phase 1: trigger → assert initial state
+            // Phase 2: read → assert intermediate state
+            // Phase 3: process → assert step advancement
+            // Phase 4: simulate async → assert continuation
+            // Phase N: assert terminal state + outbox messages
+        }
+    }
+
+    @Nested class ErrorScenario { ... }
+    @Nested class PartialScenario { ... }
+}
+```
+
+**Rules:**
+- Each `@Nested` class = one scenario (happy path, error, partial, etc.)
+- WireMock stubs are scenario-specific — set them in each test, not globally
+- Invoke services directly between assertions (not schedulers, not Kafka)
+- Assert state in DB after EACH phase, not just at the end
+- Use `@BeforeEach` to `clearAllDatabases()` + `wireMock.resetAll()`
+- Process in loops (`for (int i = 0; i < N; i++) processAll()`) because
+  pipeline may need multiple passes to advance through all steps
+
+**How to run:**
+```bash
+# All E2E scenarios
+mvn test -Dtest="*E2ETest"
+
+# Specific scenario
+mvn test -Dtest="BlockProcessingE2ETest\$HappyPath#shouldProcessEndToEnd"
+```
+
+**When this pattern does NOT apply:**
+- UI flows → use Playwright/Cypress instead
+- Cross-service flows → use contract tests (Pact) + E2E Remote
+- Performance → use k6 scripts against real environment
+
+##### E2E Remote Test Preparation (When Local is not possible)
+
 For each Use Case (UC-NNN) with Main Flow + Alternative/Exception Flows:
 
 1. **Test Data (Massa de Teste)** — Generate complete setup data:
