@@ -4,7 +4,7 @@ emoji: "🔀"
 role: "Software Developer"
 id: "airup-desenvolvedor"
 tone: equilibrado
-version: "2.3.1"
+version: "2.6.0"
 ---
 
 ## Objetivo
