@@ -116,6 +116,9 @@ Report each action as: `[SETUP-NNN] <tool>: <CONFIGURED | ALREADY_EXISTS | SKIPP
 8. WireMock — add dependency if missing for projects with Feign clients
 9. jqwik — add dependency if missing for property-based testing
 10. Spectral — create `.spectral.yml` if OpenAPI specs exist in `docs/`
+11. Contract tests — create `FeignClientContractTest` for every `@FeignClient` in the project
+12. `verify.sh` — create local verification gate script at project root (see Layer 2)
+13. `E2EEvidenceWatcher` — create TestWatcher for structured evidence capture (see QA agent)
 
 After setup, run each configured tool once and report results summary.
 Document everything in `spec/docs/04-implementation/coding_standards.md`.
@@ -260,13 +263,32 @@ advanced tests. You build the INFRASTRUCTURE, QA writes the TESTS.
 
 ### Contract Test Infrastructure
 
-6. **Pact** — Add `pact-jvm-consumer-junit5` dependency. For EACH Feign client
-   in the project:
-   - Create a consumer contract test in `tests/dev/contracts/`
-   - Generate the `.json` Pact file
-   - Document in `dependency_map.md` which contracts exist and their status
-   - Prepare a structured message for the provider team explaining what they
-     need to verify on their side
+6. **Feign Client Contract Tests** — For EACH `@FeignClient` in the project:
+   - Create a contract test class in `src/test/java/.../contract/`
+   - Use `WireMock` stubs with **realistic JSON payloads** matching upstream API format
+   - Test minimum: happy path + error (404/5xx) + edge case (empty list, null fields)
+   - Verify **field-level deserialization** (not just "no exception") — assert specific
+     field values, types, and nested objects
+   - This catches contract drift that E2E tests miss: E2E stubs are written by the same
+     person who wrote the code — if the stub format is wrong, the test passes but prod breaks
+
+   Optional: Add `pact-jvm-consumer-junit5` for provider-side verification.
+   Document contracts in `dependency_map.md`.
+
+### Local Verification Gate (`verify.sh`)
+
+7. **Create `verify.sh`** at project root — a script that runs all verification steps
+   and produces a structured JSON verdict at `target/e2e-evidence/verify-report.json`.
+
+   The script MUST include these checks:
+   - Compile (`mvn test-compile`)
+   - Unit tests (all except E2E classes)
+   - E2E + Contract tests
+   - Secrets scan (gitleaks)
+   - Context load test (Spring ApplicationContext starts)
+   - PIT mutation testing (optional, skippable via `--fast`)
+
+   Exit code: 0 = GO, 1 = NO-GO. The JSON report is designed for AI consumption.
 
 ### Output
 

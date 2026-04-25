@@ -522,6 +522,80 @@ mvn test -Dtest="BlockProcessingE2ETest\$HappyPath#shouldProcessEndToEnd"
 - Cross-service flows → use contract tests (Pact) + E2E Remote
 - Performance → use k6 scripts against real environment
 
+##### E2E Evidence Capture (`E2EEvidenceWatcher`)
+
+Every E2E test class MUST register the `E2EEvidenceWatcher` — a JUnit 5 `TestWatcher`
+that captures structured evidence per test in `target/e2e-evidence/{testMethod}.json`.
+
+**Setup:**
+1. Create `E2EEvidenceWatcher.java` in the `e2e/` package implementing `TestWatcher`
+2. Define interface `E2EEvidenceCapable` with getters for repositories + WireMock
+3. E2E test class: `@ExtendWith(E2EEvidenceWatcher.class)` + `implements E2EEvidenceCapable`
+
+**Evidence JSON structure** (designed for AI consumption, ~3-5KB per scenario):
+```json
+{
+  "scenario": "Happy Path: Bloqueio Total",
+  "testMethod": "shouldProcessBlockRemittanceEndToEnd",
+  "result": "PASS",
+  "timestamp": "2026-04-25T12:16:43Z",
+  "wiremock": {
+    "totalRequests": 6, "matched": 6, "unmatched": 0,
+    "matchedSummary": {"GET /person?cpf_cnpj=123": 1, "GET /balance/consumer/c-001/bank": 1}
+  },
+  "dbState": {
+    "blockProcessings": [{"id":1, "step":"BACENJUD_ANSWERED", "failedStep":null, "amount":300000.00}],
+    "blocks": [{"id":1, "value":300000.00, "consolidatedValue":300000.00, "blockMode":"FIXED"}],
+    "outboxMessages": [{"messageName":"jd-bacenjud-integration_events", "status":"PENDING"}]
+  }
+}
+```
+
+**Why:** Raw Maven logs are 60KB+ of noise. A validating AI agent reads the evidence
+JSON in ~500 tokens and can mechanically verify: all steps reached terminal state,
+no unmatched WireMock requests, outbox contains expected messages.
+
+##### Contract Tests (Feign Clients)
+
+For every `@FeignClient` in the project, write a contract test that validates
+request serialization and response deserialization against realistic JSON payloads.
+
+**Why contract tests AND E2E:** E2E stubs are written by the same person who wrote
+the code — if the stub is wrong, the test passes but production breaks. Contract
+tests use payloads that match the REAL upstream API format and verify field-level
+deserialization.
+
+**Pattern:**
+```java
+class FeignClientContractTest extends ApplicationTests {
+    @Autowired private WireMockServer wireMock;
+    @Autowired private PersonClient personClient;
+
+    @Test void personClient_deserializesFullResponse() {
+        wireMock.stubFor(get(urlPathEqualTo("/person"))
+            .willReturn(okJson(REALISTIC_JSON)));  // matches upstream contract
+
+        var person = personClient.findByCpfCnpj("12345678900");
+
+        assertThat(person.getName()).isEqualTo("Maria Silva");
+        assertThat(person.getRelationships()).hasSize(2);
+        assertThat(person.getRelationships().get(0).getStringProperty("consumer_id", null))
+            .isEqualTo("99001");  // field-level verification
+    }
+
+    @Test void personClient_handles404() {
+        wireMock.stubFor(get(urlPathEqualTo("/person"))
+            .willReturn(aResponse().withStatus(404)));
+        assertThatThrownBy(() -> personClient.findByCpfCnpj("000"))
+            .isInstanceOf(FeignException.NotFound.class);
+    }
+}
+```
+
+**Minimum coverage per client:** happy path + 404/error + edge case (empty list, null fields).
+
+Finding format: `[CONTRACT-NNN] <Client>: <issue>. Expected field <X> of type <Y> but got <Z>.`
+
 ##### E2E Remote Test Preparation (When Local is not possible)
 
 For each Use Case (UC-NNN) with Main Flow + Alternative/Exception Flows:
