@@ -54,7 +54,7 @@ spec/
 │   │   └── business-processes.md       ← Macro processes with Mermaid flowcharts
 │   ├── 02-requirements/                 ← 📋 Analista de Requisitos owns this
 │   │   ├── requirements.md              ← RF-XX, NFR-XX, BR-XX with traceability
-│   │   └── use_cases.md                 ← Use cases with main/alternative flows
+│   │   └── use_cases.md                 ← Use cases, flows and use-case diagram
 │   ├── 03-design/                       ← 🏛️ Arquiteto owns this
 │   │   ├── architecture.md              ← C4 views, ADRs, tech stack, patterns
 │   │   ├── domain_model.md              ← Entities, aggregates, relationships
@@ -428,8 +428,10 @@ This is the INVERTED pipeline. Instead of flowing from business to code, we extr
                         → also produces spec/docs/06-deployment/*
                           (ci_cd_pipeline, infrastructure)
 
-📋 Requirements Analyst → reads 03-design + 04-implementation, INFERS spec/docs/02-requirements/*
-                          (requirements, use_cases)
+📋 Requirements Analyst → reads 03-design + 04-implementation as TECHNICAL EVIDENCE,
+                          abstracts only observable behavior into tech-agnostic
+                          spec/docs/02-requirements/* (requirements, use_cases + use-case diagram)
+                          — never copies code, architecture or technology details
 
 📋 Business Analyst     → reads 02-requirements, INFERS spec/docs/01-business/*
                           (vision, glossary, stakeholders, business-rules, business-processes)
@@ -444,8 +446,10 @@ This is the INVERTED pipeline. Instead of flowing from business to code, we extr
 ```
 
 IMPORTANT for brownfield:
-- Mark all reverse-engineered artifacts with: `> **Last updated:** Reverse-engineered from source code (<date>)`
-- Business and Requirements artifacts derived from code analysis should include a caveat: these are INFERRED from implementation and may not reflect the original intent
+- Mark technical reverse-engineered artifacts with: `> **Last updated:** Reverse-engineered from source code (<date>)`
+- The Requirements Analyst may consult `03-design/*` and `04-implementation/*` only as private evidence of observable behavior. Its `02-requirements/*` output MUST be technology-agnostic and must not mention code, APIs, databases, queues, frameworks, infrastructure or architecture.
+- Requirements artifacts must express capabilities, business rules, actors, conditions, outcomes and quality attributes — never implementation choices. Technical traceability belongs in the design/implementation artifacts, AUDIT findings or the Governor's handoff, not in `requirements.md` or `use_cases.md`.
+- Business and Requirements artifacts derived from code analysis should state that they are INFERRED from observable behavior and may not reflect the original intent
 - The Quality Analyst should flag any divergences between what the code does and what a reasonable specification would expect
 
 ---
@@ -766,7 +770,7 @@ When presenting a gate to the human (Supervised or Key Gates mode), include a co
 - **AGENT ID:** 6940e4cd-c2e4-4893-9b4d-25e4fd6d6b45
 - CAPABILITIES: Transforms business solutions into functional/non-functional requirements, defines use cases with flows, establishes business rules
 - READS: `spec/docs/01-business/*`
-- PRODUCES: `spec/docs/02-requirements/` — requirements.md, use_cases.md
+- PRODUCES: `spec/docs/02-requirements/` — requirements.md, use_cases.md (including use-case diagram)
 - ROUTE TO when: business artifacts exist and the demand is about defining WHAT the system must do (RF, NFR, BR, use cases)
 - NEVER ask this agent to: design architecture, write code, choose technologies
 

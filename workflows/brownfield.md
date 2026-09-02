@@ -31,19 +31,26 @@ Aplique SDD neste repositório. É um projeto existente — faça engenharia rev
 
 ### 3. O agente executa o pipeline invertido
 
-Ao invés de especificar e depois codificar, ele **extrai especificações do código**:
+Ao invés de especificar e depois codificar, ele **reconstrói a especificação em camadas**. O código é evidência para as fases técnicas; não deve ser copiado indiscriminadamente para os requisitos:
 
 1. **🔀 Desenvolvedor** — Lê o código, documenta padrões, configurações, dependências
 2. **🏛️ Arquiteto** — Infere arquitetura, modelo de domínio, contratos de API
-3. **📋 Requisitos** — Infere requisitos funcionais e não-funcionais do comportamento
+3. **📋 Requisitos** — Consulta os artefatos técnicos anteriores como evidência privada, abstrai somente o comportamento observável em requisitos agnósticos de tecnologia e sempre gera o diagrama de casos de uso
 4. **📋 Negócios** — Infere visão, regras de negócio, processos do que o sistema faz
 5. **🧪 Qualidade** — Verifica tudo, cataloga dívida técnica e riscos
+
+#### Fronteira obrigatória da fase de Requisitos
+
+Os artefatos `spec/docs/02-requirements/requirements.md` e `spec/docs/02-requirements/use_cases.md` devem expressar apenas **o que** o sistema faz, **por que** isso é necessário, seus atores, condições, resultados e atributos de qualidade. Não podem mencionar código, classes, métodos, endpoints, APIs, banco de dados, tabelas, filas, tópicos, frameworks, bibliotecas, linguagens, infraestrutura ou decisões de arquitetura.
+
+Se uma observação técnica não puder ser traduzida para uma capacidade ou resultado observável por um stakeholder, ela permanece nos artefatos técnicos anteriores ou é encaminhada ao Governante como evidência, dúvida ou divergência para validação de negócio. O arquivo `use_cases.md` também deve conter o desenho de casos de uso, mostrando atores, limite do sistema e ações disponíveis; Mermaid é o formato preferencial, mas qualquer formato textual já suportado pelo projeto é aceito. Em modo AUDIT, referências técnicas continuam permitidas nos achados de conformidade, mas não devem ser incorporadas aos artefatos de requisitos.
 
 ### 4. Resultado
 
 Mesma estrutura de 24 artefatos, mas com caveats:
 
-- Artefatos marcados como **"Inferido do código-fonte"**
+- Artefatos técnicos marcados como **"Inferido do código-fonte"**
+- Requisitos e negócios marcados como **"Inferido do comportamento observado"**, com validação de intenção pendente
 - Regras de negócio marcadas como **OBSERVADA** vs **INFERIDA**
 - Dívida técnica catalogada com prioridade
 - Roadmap de evolução sugerido
